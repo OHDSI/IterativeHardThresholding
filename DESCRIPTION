@@ -1,8 +1,8 @@
 Package: IterativeHardThresholding
 Type: Package
-Title: Broken adaptive ridge extensions to Cyclop
+Title: Iterative hard thresholding extensions to Cyclop
 Version: 0.2.0
-Date: 2017-11-19
+Date: 2018-12-10
 Author: Marc A. Suchard [aut, cre],
     Patrick Ryan [aut]
 Maintainer: Marc A. Suchard <msuchard@ucla.edu>

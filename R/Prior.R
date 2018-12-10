@@ -19,12 +19,12 @@
 # @author Marc A. Suchard
 # @author Ning Li
 
-#' @title Create a BAR Cyclops prior object
+#' @title Create an IHT Cyclops prior object
 #'
 #' @description
-#' \code{createBarPrior} creates a BAR Cyclops prior object for use with \code{\link{fitCyclopsModel}}.
+#' \code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link{fitCyclopsModel}}.
 #'
-#' @param penalty        Specifies the BAR penalty; possible values are `BIC` or `AIC` or a numeric value
+#' @param penalty        Specifies the IHT penalty; possible values are `BIC` or `AIC` or a numeric value
 #' @param exclude        A vector of numbers or covariateId names to exclude from prior
 #' @param forceIntercept Logical: Force intercept coefficient into regularization
 #' @param fitBestSubset  Logical: Fit final subset with no regularization
@@ -35,16 +35,16 @@
 #' @param delta         Numeric: change from 2 in ridge norm dimension
 #'
 #' @examples
-#' prior <- createBarPrior(penalty = "bic")
+#' prior <- createIhtPrior(penalty = "bic")
 #'
 #' @return
-#' A BAR Cyclops prior object of class inheriting from
+#' An IHT Cyclops prior object of class inheriting from
 #' \code{"cyclopsPrior"} for use with \code{fitCyclopsModel}.
 #'
 #' @import Cyclops
 #'
 #' @export
-createBarPrior <- function(penalty = "bic",
+createIhtPrior <- function(penalty = "bic",
                            exclude = c(),
                            forceIntercept = FALSE,
                            fitBestSubset = FALSE,
@@ -57,8 +57,8 @@ createBarPrior <- function(penalty = "bic",
     # TODO Check that penalty (and other arguments) is valid
 
     fitHook <- function(...) {
-      # closure to capture BAR parameters
-      barHook(fitBestSubset, initialRidgeVariance, tolerance,
+      # closure to capture IHT parameters
+      ihtHook(fitBestSubset, initialRidgeVariance, tolerance,
               maxIterations, threshold, delta, ...)
     }
 
@@ -71,14 +71,14 @@ createBarPrior <- function(penalty = "bic",
 
 # Below are package-private functions
 
-barHook <- function(fitBestSubset,
+ihtHook <- function(fitBestSubset,
                     initialRidgeVariance,
                     tolerance,
                     maxIterations,
                     cutoff,
                     delta,
                     cyclopsData,
-                    barPrior,
+                    ihtPrior,
                     control,
                     weights,
                     forceNewObject,
@@ -87,17 +87,17 @@ barHook <- function(fitBestSubset,
                     fixedCoefficients) {
 
   # Getting starting values
-  startFit <- Cyclops::fitCyclopsModel(cyclopsData, prior = createBarStartingPrior(cyclopsData,
-                                                                                   exclude = barPrior$exclude,
-                                                                                   forceIntercept = barPrior$forceIntercept,
+  startFit <- Cyclops::fitCyclopsModel(cyclopsData, prior = createIhtStartingPrior(cyclopsData,
+                                                                                   exclude = ihtPrior$exclude,
+                                                                                   forceIntercept = ihtPrior$forceIntercept,
                                                                                    initialRidgeVariance = initialRidgeVariance),
                                        control, weights, forceNewObject, returnEstimates, startingCoefficients, fixedCoefficients)
 
-  priorType <- createBarPriorType(cyclopsData, barPrior$exclude, barPrior$forceIntercept)
+  priorType <- createIhtPriorType(cyclopsData, ihtPrior$exclude, ihtPrior$forceIntercept)
   include <- setdiff(c(1:Cyclops::getNumberOfCovariates(cyclopsData)), priorType$excludeIndices)
 
   pre_coef <- coef(startFit)
-  penalty <- getPenalty(cyclopsData, barPrior)
+  penalty <- getPenalty(cyclopsData, ihtPrior)
 
   futile.logger::flog.trace("Initial penalty: %f", penalty)
 
@@ -119,7 +119,7 @@ barHook <- function(fitBestSubset,
     }
 
     prior <- Cyclops::createPrior(priorType$types, variance = variance,
-                                  forceIntercept = barPrior$forceIntercept)
+                                  forceIntercept = ihtPrior$forceIntercept)
 
     fit <- Cyclops::fitCyclopsModel(cyclopsData,
                                     prior = prior,
@@ -157,15 +157,15 @@ barHook <- function(fitBestSubset,
                                     control, weights, forceNewObject, fixedCoefficients = fixed)
   }
 
-  class(fit) <- c(class(fit), "cyclopsBarFit")
-  fit$barConverged <- converged
-  fit$barIterations <- count
-  fit$barFinalPriorVariance <- variance
+  class(fit) <- c(class(fit), "cyclopsIhtFit")
+  fit$ihtConverged <- converged
+  fit$ihtIterations <- count
+  fit$ihtFinalPriorVariance <- variance
 
   return(fit)
 }
 
-createBarStartingPrior <- function(cyclopsData,
+createIhtStartingPrior <- function(cyclopsData,
                                    exclude,
                                    forceIntercept,
                                    initialRidgeVariance) {
@@ -173,7 +173,7 @@ createBarStartingPrior <- function(cyclopsData,
   Cyclops::createPrior("normal", variance = initialRidgeVariance, exclude = exclude, forceIntercept = forceIntercept)
 }
 
-createBarPriorType <- function(cyclopsData,
+createIhtPriorType <- function(cyclopsData,
                                exclude,
                                forceIntercept) {
 
@@ -212,15 +212,15 @@ createBarPriorType <- function(cyclopsData,
        excludeIndices = indices)
 }
 
-getPenalty <- function(cyclopsData, barPrior) {
+getPenalty <- function(cyclopsData, ihtPrior) {
 
-  if (is.numeric(barPrior$penalty)) {
-    return(barPrior$penalty)
+  if (is.numeric(ihtPrior$penalty)) {
+    return(ihtPrior$penalty)
   }
 
-  if (barPrior$penalty == "bic") {
+  if (ihtPrior$penalty == "bic") {
     return(log(Cyclops::getNumberOfRows(cyclopsData)) / 2) # TODO Handle stratified models
   } else {
-    stop("Unhandled BAR penalty type")
+    stop("Unhandled IHT penalty type")
   }
 }
