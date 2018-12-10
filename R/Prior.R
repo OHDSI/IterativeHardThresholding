@@ -99,7 +99,7 @@ ihtHook <- function(fitBestSubset,
   pre_coef <- coef(startFit)
   penalty <- getPenalty(cyclopsData, ihtPrior)
 
-  futile.logger::flog.trace("Initial penalty: %f", penalty)
+  ParallelLogger::logTrace("Initial penalty: %f", penalty)
 
   continue <- TRUE
   count <- 0
@@ -130,10 +130,10 @@ ihtHook <- function(fitBestSubset,
     coef <- coef(fit)
 
     end <- min(10, length(variance))
-    futile.logger::flog.trace("Itr: %d", count)
-    futile.logger::flog.trace("\tVar : ", variance[1:end], capture = TRUE)
-    futile.logger::flog.trace("\tCoef: ", coef[1:end], capture = TRUE)
-    futile.logger::flog.trace("")
+    ParallelLogger::logTrace("Itr: %d", count)
+    ParallelLogger::logTrace("\tVar : ", variance[1:end], capture = TRUE)
+    ParallelLogger::logTrace("\tCoef: ", coef[1:end], capture = TRUE)
+    ParallelLogger::logTrace("")
 
     if (max(abs(coef - pre_coef)) < tolerance) {
       converged <- TRUE

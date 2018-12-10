@@ -1,4 +1,4 @@
 library(testthat)
-library(BrokenAdaptiveRidge)
+library(IterativeHardThresholding)
 
-test_check("BrokenAdaptiveRidge")
+test_check("IterativeHardThresholding")
