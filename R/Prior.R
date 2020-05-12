@@ -24,6 +24,7 @@
 #' @description
 #' \code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link{fitCyclopsModel}}.
 #'
+#' @param K              Maximum # of non-zero covariates
 #' @param penalty        Specifies the IHT penalty; possible values are `BIC` or `AIC` or a numeric value
 #' @param exclude        A vector of numbers or covariateId names to exclude from prior
 #' @param forceIntercept Logical: Force intercept coefficient into regularization
@@ -44,7 +45,8 @@
 #' @import Cyclops
 #'
 #' @export
-createIhtPrior <- function(penalty = "bic",
+createIhtPrior <- function(K,
+                           penalty = "bic",
                            exclude = c(),
                            forceIntercept = FALSE,
                            fitBestSubset = FALSE,
@@ -56,13 +58,18 @@ createIhtPrior <- function(penalty = "bic",
 
     # TODO Check that penalty (and other arguments) is valid
 
+    if (K < 1) {
+      stop("Maximum # of covariates must be >= 1")
+    }
+
     fitHook <- function(...) {
       # closure to capture IHT parameters
       ihtHook(fitBestSubset, initialRidgeVariance, tolerance,
               maxIterations, threshold, delta, ...)
     }
 
-    structure(list(penalty = penalty,
+    structure(list(K = K,
+                   penalty = penalty,
                    exclude = exclude,
                    forceIntercept = forceIntercept,
                    fitHook = fitHook),
@@ -98,6 +105,7 @@ ihtHook <- function(fitBestSubset,
 
   pre_coef <- coef(startFit)
   penalty <- getPenalty(cyclopsData, ihtPrior)
+  K <- ihtPrior$K
 
   ParallelLogger::logTrace("Initial penalty: %f", penalty)
 
@@ -128,6 +136,16 @@ ihtHook <- function(fitBestSubset,
                                     fixedCoefficients = fixed)
 
     coef <- coef(fit)
+
+
+    # IHT projection
+    if (!is.null(priorType$excludeIndices)) {
+      stop("Not yet implemented")
+    }
+    entry <- length(coef) - K - 1
+    kThLargest <- -sort(-abs(coef), partial = K)[K]
+    mask <- abs(coef) >= kThLargest
+    coef <- coef * mask
 
     end <- min(10, length(variance))
     ParallelLogger::logTrace("Itr: %d", count)
