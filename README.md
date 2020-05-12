@@ -30,7 +30,7 @@ lambda <- log(n)  # BAR penalty (BIC)
 xi     <- 0.1     # initial ridge penalty
 
 ## Cox model parameters
-true.beta <- c(1, 0, 0, -1, 1, rep(0, p - 5))
+true.beta <- c(1, 0.1, 0, -1, 1, rep(0, p - 5))
 
 ## simulate data from an exponential model
 x        <- matrix(rnorm(p * n, mean = 0, sd = 1), ncol = p)
@@ -41,10 +41,10 @@ survtime <- pmin(ti, ci)
 delta    <- ti == survtime; mean(delta)
 
 cyclopsData <- createCyclopsData(Surv(survtime, delta) ~ x, modelType = "cox")
-barPrior    <- createBarPrior(penalty = lambda / 2, initialRidgeVariance = 2 / xi)
+ihtPrior    <- createIhtPrior(K = 3, penalty = "bic")
 
 cyclopsFit <- fitCyclopsModel(cyclopsData,
-                              prior = barPrior)
+                              prior = ihtPrior)
 coef(cyclopsFit)
  ```
 
@@ -63,7 +63,7 @@ xi     <- 0.1     # initial ridge penalty
 
 ## logistic model parameters
 itcpt     <- 0.2 # intercept
-true.beta <- c(1, 0, 0, -1, 1, rep(0, p - 5))
+true.beta <- c(1, 0.3, 0, -1, 1, rep(0, p - 5))
 
 ## simulate data from logistic model
 x <- matrix(rnorm(p * n, mean = 0, sd = 1), ncol = p)
@@ -72,11 +72,10 @@ y <- rbinom(n, 1, 1 / (1 + exp(-itcpt - x%*%true.beta)))
 
 # fit BAR model
 cyclopsData <- createCyclopsData(y ~ x, modelType = "lr")
-barPrior    <- createBarPrior(penalty = lambda / 2, exclude = c("(Intercept)"),
-                              initialRidgeVariance = 2 / xi)
+ihtPrior    <- createIhtPrior(K  = 3, penalty = "bic", exclude = c("(Intercept)"))
 
 cyclopsFit <- fitCyclopsModel(cyclopsData,
-                              prior = barPrior)
+                              prior = ihtPrior)
 coef(cyclopsFit)
  ```
 Technology
@@ -102,13 +101,13 @@ Getting Started
   install_github("ohdsi/IterativeHardThresholding")
   ```
 
-3. To perform a L_0-based Cyclops model fit, use the following commands in R:
+3. To perform a L_0-based Cyclops model fit with IHT, use the following commands in R:
 
   ```r
   library(IterativeHardThresholding)
   cyclopsData <- createCyclopsData(formula, modelType = "modelType") ## TODO: Update
-  barPrior    <- createBarPrior(penalty = lambda / 2, initialRidgeVariance = 2 / xi)
-  cyclopsFit  <- fitCyclopsModel(cyclopsData, prior = barPrior)
+  ihtPrior    <- createIhtPrior(K = 5, penalty = "bic")
+  cyclopsFit  <- fitCyclopsModel(cyclopsData, prior = ihtPrior)
   coef(cyclopsFit) #Extract coefficients
   ```
 

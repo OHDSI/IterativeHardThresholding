@@ -1,6 +1,6 @@
 # @file Prior.R
 #
-# Copyright 2017 Observational Health Data Sciences and Informatics
+# Copyright 2020 Observational Health Data Sciences and Informatics
 #
 # This file is part of BrokenAdaptiveRidge
 #
@@ -36,7 +36,7 @@
 #' @param delta         Numeric: change from 2 in ridge norm dimension
 #'
 #' @examples
-#' prior <- createIhtPrior(penalty = "bic")
+#' prior <- createIhtPrior(K = 10)
 #'
 #' @return
 #' An IHT Cyclops prior object of class inheriting from
