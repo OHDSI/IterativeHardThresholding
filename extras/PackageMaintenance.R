@@ -1,6 +1,6 @@
 # @file PackageMaintenance
 #
-# Copyright 2017 Observational Health Data Sciences and Informatics
+# Copyright 2020 Observational Health Data Sciences and Informatics
 #
 # This file is part of BrokenAdaptiveRidge
 #
@@ -18,16 +18,13 @@
 
 # Format and check code:
 OhdsiRTools::formatRFolder()
-OhdsiRTools::checkUsagePackage("BrokenAdaptiveRidge")
+OhdsiRTools::checkUsagePackage("IterativeHardThresholding")
 OhdsiRTools::updateCopyrightYearFolder()
 
 # Create manual and vignettes:
 shell("rm extras/BrokenAdaptiveRidge.pdf")
-shell("R CMD Rd2pdf ./ --output=extras/BrokenAdaptiveRidge.pdf")
+shell("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
 
-# rmarkdown::render("vignettes/SingleStudies.Rmd",
-#                   output_file = "../inst/doc/SingleStudies.pdf",
-#                   rmarkdown::pdf_document(latex_engine = "pdflatex",
-#                                           toc = TRUE,
-#                                           number_sections = TRUE))
+# rmarkdown::render('vignettes/SingleStudies.Rmd', output_file = '../inst/doc/SingleStudies.pdf',
+# rmarkdown::pdf_document(latex_engine = 'pdflatex', toc = TRUE, number_sections = TRUE))
 
