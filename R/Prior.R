@@ -137,14 +137,22 @@ ihtHook <- function(fitBestSubset,
 
     coef <- coef(fit)
 
-
     # IHT projection
     if (!is.null(priorType$excludeIndices)) {
-      stop("Not yet implemented")
+      tmp_coef <- coef[-priorType$excludeIndices]
+      entry <- length(tmp_coef) - K - 1
+      kThLargest <- -sort(-abs(coef), partial = K)[K]
+    } else {
+      entry <- length(coef) - K - 1
+      kThLargest <- -sort(-abs(coef), partial = K)[K]
     }
-    entry <- length(coef) - K - 1
-    kThLargest <- -sort(-abs(coef), partial = K)[K]
+
     mask <- abs(coef) >= kThLargest
+
+    if (!is.null(priorType$excludeIndices)) {
+      mask[priorType$excludeIndices] <- TRUE
+    }
+
     coef <- coef * mask
 
     end <- min(10, length(variance))
