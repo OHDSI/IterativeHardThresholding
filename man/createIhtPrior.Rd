@@ -4,12 +4,22 @@
 \alias{createIhtPrior}
 \title{Create an IHT Cyclops prior object}
 \usage{
-createIhtPrior(penalty = "bic", exclude = c(),
-  forceIntercept = FALSE, fitBestSubset = FALSE,
-  initialRidgeVariance = 10000, tolerance = 1e-08,
-  maxIterations = 10000, threshold = 1e-06, delta = 0)
+createIhtPrior(
+  K,
+  penalty = "bic",
+  exclude = c(),
+  forceIntercept = FALSE,
+  fitBestSubset = FALSE,
+  initialRidgeVariance = 10000,
+  tolerance = 1e-08,
+  maxIterations = 10000,
+  threshold = 1e-06,
+  delta = 0
+)
 }
 \arguments{
+\item{K}{Maximum # of non-zero covariates}
+
 \item{penalty}{Specifies the IHT penalty; possible values are `BIC` or `AIC` or a numeric value}
 
 \item{exclude}{A vector of numbers or covariateId names to exclude from prior}
@@ -36,6 +46,6 @@ An IHT Cyclops prior object of class inheriting from
 \code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link{fitCyclopsModel}}.
 }
 \examples{
-prior <- createIhtPrior(penalty = "bic")
+prior <- createIhtPrior(K = 10)
 
 }
