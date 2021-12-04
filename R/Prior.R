@@ -129,6 +129,9 @@ ihtHook <- function(fitBestSubset,
     prior <- Cyclops::createPrior(priorType$types, variance = variance,
                                   forceIntercept = ihtPrior$forceIntercept)
 
+    # TODO: Save current log-likelihood
+    # TODO: Set stepSizeMultiplier (we will hack in a function to do this for prototyping)
+
     fit <- Cyclops::fitCyclopsModel(cyclopsData,
                                     prior = prior,
                                     control, weights, forceNewObject,
@@ -136,6 +139,12 @@ ihtHook <- function(fitBestSubset,
                                     fixedCoefficients = fixed)
 
     coef <- coef(fit)
+
+    # TODO: Get new log-likelihood
+    # TODO: Compare new and current ll
+    # TODO: If moving in right direction
+    # TODO:   Then stepSizeMultiplier <- 1
+    # TODO:   Else stepSizeMultiplier <- stepSizeMultier / 2
 
     # IHT projection
     if (!is.null(priorType$excludeIndices)) {
