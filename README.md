@@ -1,9 +1,10 @@
 IterativeHardThresholding
 =======
 
-<!--
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/Cyclops)](https://CRAN.R-project.org/package=Cyclops)
--->
+[![Build Status](https://github.com/ohdsi/IterativeHardThresholding/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/IterativeHardThresholding/actions?query=workflow%3AR-CMD-check)
+[![codecov.io](https://codecov.io/github/OHDSI/IterativeHardThresholding/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
+
+IterativeHardThresholding is part of the [HADES](https://ohdsi.github.io/Hades/).
 
 Introduction
 ============
