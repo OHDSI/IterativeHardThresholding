@@ -3,3 +3,4 @@
 .github
 deploy.sh
 extras
+_pkgdown.yml
