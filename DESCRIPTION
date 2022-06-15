@@ -1,6 +1,6 @@
 Package: IterativeHardThresholding
 Type: Package
-Title: Iterative hard thresholding extensions to Cyclop
+Title: Iterative Hard Thresholding Extensions to Cyclop
 Version: 1.0.0
 Date: 2022-6-15
 Author: Marc A. Suchard [aut, cre],
@@ -22,4 +22,4 @@ Suggests:
     rmarkdown
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0

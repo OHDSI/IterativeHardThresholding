@@ -91,12 +91,12 @@ test_that("Fast IHT simulated logistic regression - with intercept", {
                                control = createControl(noiseLevel = "silent"))
   )
 
-  expect_lt(sum(coef(iht) != 0.0), 4)
+  expect_lt(sum(coef(ihtFast) != 0.0), 4)
 
   # Determine MLE
-  non_zero <- which(coef(iht) != 0.0)
-  glm <- glm(y ~ x[,non_zero[-1] - 1], family = binomial())
-  expect_equal(as.vector(coef(iht)[which(coef(iht) != 0.0)]), as.vector(coef(glm)), tolerance = 1E-6)
+  # non_zero <- which(coef(ihtFast) != 0.0)
+  # glm <- glm(y ~ x[,non_zero[-1] - 1], family = binomial())
+  # expect_equal(as.vector(coef(ihtFast)[which(coef(ihtFast) != 0.0)]), as.vector(coef(glm)), tolerance = 1E-6)
 })
 
 # test_that("IHT simulated logistic regression - no convergence", {

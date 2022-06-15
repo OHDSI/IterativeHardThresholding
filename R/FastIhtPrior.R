@@ -1,6 +1,6 @@
 # @file fastIhtPrior.R
 #
-# Copyright 2020 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of IterativeHardThresholding
 #
@@ -31,6 +31,7 @@
 #' @param initialRidgeVariance Numeric: variance used for algorithm initiation
 #' @param tolerance Numeric: maximum abs change in coefficient estimates from successive iterations to achieve convergence
 #' @param maxIterations Numeric: maxium iterations to achieve convergence
+#' @param threshold     Numeric: absolute threshold at which to force coefficient to 0
 #'
 #' @examples
 #' nobs = 500; ncovs = 100
