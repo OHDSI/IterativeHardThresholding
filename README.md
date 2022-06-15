@@ -4,12 +4,12 @@ IterativeHardThresholding
 [![Build Status](https://github.com/ohdsi/IterativeHardThresholding/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/IterativeHardThresholding/actions?query=workflow%3AR-CMD-check)
 [![codecov.io](https://codecov.io/github/OHDSI/IterativeHardThresholding/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
 
-IterativeHardThresholding is part of the [HADES](https://ohdsi.github.io/Hades/).
+`IterativeHardThresholding` is part of the [HADES](https://ohdsi.github.io/Hades/).
 
 Introduction
 ============
 
-IterativeHardThresholding is an `R` package for performing L_0-based regressions using `Cyclops`
+`IterativeHardThresholding` is an `R` package for performing L_0-based regressions using `Cyclops`
 
 Features
 ========
@@ -93,7 +93,7 @@ Dependencies
 Getting Started
 ===============
 1. On Windows, make sure [RTools](https://CRAN.R-project.org/bin/windows/Rtools/) is installed.
-2. In R, use the following commands to download and install IterativeHardThresholding:
+2. In R, use the following commands to download and install `IterativeHardThresholding`:
 
   ```r
   install.packages("devtools")
@@ -120,18 +120,11 @@ Getting Involved
 
 License
 =======
-IterativeHardThresholding is licensed under Apache License 2.0.
+`IterativeHardThresholding` is licensed under Apache License 2.0.
 
 Development
 ===========
-IterativeHardThresholding is being developed in R Studio.
-
-### Development status
-
-[![Build Status](https://travis-ci.org/OHDSI/IterativeHardThresholding.svg?branch=master)](https://travis-ci.org/OHDSI/IterativeHardThresholding)
-[![codecov.io](https://codecov.io/github/OHDSI/IterativeHardThresholding/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/IterativeHardThresholding?branch=master)
-
-Beta
+`IterativeHardThresholding` is being developed in R Studio.
 
 Acknowledgments
 ================
