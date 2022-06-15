@@ -17,8 +17,6 @@
 # limitations under the License.
 #
 # @author Marc A. Suchard
-# @author Ning Li
-# @author Eric S. Kawaguchi
 
 #' @title Create a fastIHT Cyclops prior object
 #'

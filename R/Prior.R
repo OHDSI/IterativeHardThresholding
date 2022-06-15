@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 # @author Marc A. Suchard
-# @author Ning Li
 
 #' @title Create an IHT Cyclops prior object
 #'

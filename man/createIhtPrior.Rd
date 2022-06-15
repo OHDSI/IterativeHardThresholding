@@ -10,7 +10,7 @@ createIhtPrior(
   exclude = c(),
   forceIntercept = FALSE,
   fitBestSubset = FALSE,
-  initialRidgeVariance = 10000,
+  initialRidgeVariance = 0.1,
   tolerance = 1e-08,
   maxIterations = 10000,
   threshold = 1e-06,
