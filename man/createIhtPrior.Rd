@@ -32,7 +32,7 @@ createIhtPrior(
 
 \item{tolerance}{Numeric: maximum abs change in coefficient estimates from successive iterations to achieve convergence}
 
-\item{maxIterations}{Numeric: maxium iterations to achieve convergence}
+\item{maxIterations}{Numeric: maximum iterations to achieve convergence}
 
 \item{threshold}{Numeric: absolute threshold at which to force coefficient to 0}
 

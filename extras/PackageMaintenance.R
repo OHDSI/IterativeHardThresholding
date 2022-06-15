@@ -20,11 +20,16 @@
 OhdsiRTools::formatRFolder()
 OhdsiRTools::checkUsagePackage("IterativeHardThresholding")
 OhdsiRTools::updateCopyrightYearFolder()
+devtools::spell_check()
 
-# Create manual and vignettes:
-shell("rm extras/BrokenAdaptiveRidge.pdf")
-shell("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
+# Create manual and website
+if (.Platform$OS.type == "unix") {
+  system("rm extras/Cyclops.pdf")
+  system("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
+} else {
+  unlink("extras/Cyclops.pdf")
+  shell("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
+}
 
-# rmarkdown::render('vignettes/SingleStudies.Rmd', output_file = '../inst/doc/SingleStudies.pdf',
-# rmarkdown::pdf_document(latex_engine = 'pdflatex', toc = TRUE, number_sections = TRUE))
-
+pkgdown::build_site()
+OhdsiRTools::fixHadesLogo()

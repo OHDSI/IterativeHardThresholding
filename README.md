@@ -132,8 +132,6 @@ IterativeHardThresholding is being developed in R Studio.
 
 Beta
 
-Acknowledgements
+Acknowledgments
 ================
-- This project is supported in part through the National Science Foundation grants IIS 1251151 and DMS 1264153.
-
-
+- This project is supported in part through the National Institutes of Health grant R01 HG006139.
