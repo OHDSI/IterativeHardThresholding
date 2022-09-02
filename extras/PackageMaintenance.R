@@ -24,10 +24,10 @@ devtools::spell_check()
 
 # Create manual and website
 if (.Platform$OS.type == "unix") {
-  system("rm extras/Cyclops.pdf")
+  system("rm extras/IterativeHardThresholding")
   system("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
 } else {
-  unlink("extras/Cyclops.pdf")
+  unlink("extras/IterativeHardThresholding")
   shell("R CMD Rd2pdf ./ --output=extras/IterativeHardThresholding.pdf")
 }
 

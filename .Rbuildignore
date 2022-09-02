@@ -5,3 +5,4 @@ deploy.sh
 extras
 _pkgdown.yml
 compare_versions
+docs

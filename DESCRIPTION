@@ -2,7 +2,7 @@ Package: IterativeHardThresholding
 Type: Package
 Title: Iterative Hard Thresholding Extensions to Cyclops
 Version: 1.0.1
-Date: 2022-6-15
+Date: 2022-9-2
 Author: Marc A. Suchard [aut, cre],
     Patrick Ryan [aut]
 Maintainer: Marc A. Suchard <msuchard@ucla.edu>
