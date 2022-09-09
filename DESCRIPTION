@@ -1,16 +1,19 @@
 Package: IterativeHardThresholding
 Type: Package
 Title: Iterative Hard Thresholding Extensions to Cyclops
-Version: 1.0.1
-Date: 2022-9-2
-Author: Marc A. Suchard [aut, cre],
-    Patrick Ryan [aut]
+Version: 1.0.2
+Date: 2022-9-7
+Authors@R: c(
+    person("Marc A.", "Suchard", email = "msuchard@ucla.edu", role = c("aut","cre")),
+    person("Patrick", "Ryan", role = "aut"),
+    person("Observational Health Data Sciences and Informatics", role = "cph")
+    )
 Maintainer: Marc A. Suchard <msuchard@ucla.edu>
 Description: Fits large-scale regression models with a penalty that 
   restricts the maximum number of non-zero regression coefficients
-  to a prespecified value.
+  to a prespecified value.  While Chu et al (2020) <doi:10.1093/gigascience/giaa044>
+  describe the basic algorithm, this package uses Cyclops for an efficient implementation.
 License: Apache License 2.0
-VignetteBuilder: knitr
 Depends:
     R (>= 3.2.2),
     Cyclops (>= 1.3.0)
@@ -21,5 +24,4 @@ Suggests:
     knitr,
     rmarkdown
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.2.0

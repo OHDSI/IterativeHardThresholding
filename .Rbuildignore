@@ -6,3 +6,5 @@ extras
 _pkgdown.yml
 compare_versions
 docs
+cran-comments.md
+^CRAN-RELEASE$

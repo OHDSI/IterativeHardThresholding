@@ -116,7 +116,7 @@ Getting Involved
 ================
 * Package manual: [IterativeHardThresholding manual](https://raw.githubusercontent.com/OHDSI/IterativeHardThresholding/master/extras/IterativeHardThresholding.pdf)
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
-* We use the <a href="../../issues">GitHub issue tracker</a> for all bugs/issues/enhancements
+* We use the <a href="https://github.com/OHDSI/IterativeHardThresholding/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
 
 License
 =======
