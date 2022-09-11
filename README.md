@@ -26,10 +26,6 @@ library(survival)
 p <- 20    # number of covariates
 n <- 300   # sample size
 
-## tuning parameters
-lambda <- log(n)  # BAR penalty (BIC)
-xi     <- 0.1     # initial ridge penalty
-
 ## Cox model parameters
 true.beta <- c(1, 0.1, 0, -1, 1, rep(0, p - 5))
 
@@ -58,10 +54,6 @@ library(IterativeHardThresholding)
 p <- 20    # number of covariates
 n <- 300   # sample size
 
-## tuning parameters
-lambda <- log(n)  # BAR penalty (BIC)
-xi     <- 0.1     # initial ridge penalty
-
 ## logistic model parameters
 itcpt     <- 0.2 # intercept
 true.beta <- c(1, 0.3, 0, -1, 1, rep(0, p - 5))
@@ -84,7 +76,7 @@ Technology
 
 System Requirements
 ===================
-Requires `R` (version 3.2.0 or higher). Installation on Windows requires [RTools]( https://CRAN.R-project.org/bin/windows/Rtools/) (`devtools >= 1.12` required for RTools34, otherwise RTools33 works fine).
+Requires `R` (version 3.2.0 or higher).
 
 Dependencies
 ============
@@ -96,10 +88,8 @@ Getting Started
 2. In R, use the following commands to download and install `IterativeHardThresholding`:
 
   ```r
-  install.packages("devtools")
-  library(devtools)
-  install_github("ohdsi/Cyclops")
-  install_github("ohdsi/IterativeHardThresholding")
+  install.packages("Cyclops")
+  install.packages("IterativeHardThresholding")
   ```
 
 3. To perform a L_0-based Cyclops model fit with IHT, use the following commands in R:
