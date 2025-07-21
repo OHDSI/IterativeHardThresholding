@@ -2,7 +2,7 @@ IterativeHardThresholding
 =======
 
 [![Build Status](https://github.com/ohdsi/IterativeHardThresholding/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/IterativeHardThresholding/actions?query=workflow%3AR-CMD-check)
-[![codecov.io](https://codecov.io/github/OHDSI/IterativeHardThresholding/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
+[![codecov.io](https://app.codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)](https://app.codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
 
 `IterativeHardThresholding` is part of the [HADES](https://ohdsi.github.io/Hades/).
 
