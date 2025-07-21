@@ -43,7 +43,7 @@ An IHT Cyclops prior object of class inheriting from
 \code{"cyclopsPrior"} for use with \code{fitCyclopsModel}.
 }
 \description{
-\code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link{Cyclops}{fitCyclopsModel}}.
+\code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link[Cyclops]{fitCyclopsModel}}.
 }
 \examples{
 prior <- createIhtPrior(K = 10)

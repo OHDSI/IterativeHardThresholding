@@ -21,7 +21,7 @@
 #' @title Create an IHT Cyclops prior object
 #'
 #' @description
-#' \code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link{Cyclops}{fitCyclopsModel}}.
+#' \code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link[Cyclops]{fitCyclopsModel}}.
 #'
 #' @param K              Maximum # of non-zero covariates
 #' @param penalty        Specifies the IHT penalty; possible values are `BIC` or `AIC` or a numeric value

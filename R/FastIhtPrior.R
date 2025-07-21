@@ -21,7 +21,7 @@
 #' @title Create a fastIHT Cyclops prior object
 #'
 #' @description
-#' \code{createFastIhtPrior} creates a fastIHT Cyclops prior object for use with \code{\link{Cyclops}{fitCyclopsModel}}.
+#' \code{createFastIhtPrior} creates a fastIHT Cyclops prior object for use with \code{\link[Cyclops]{fitCyclopsModel}}.
 #'
 #' @param K              Maximum # of non-zero covariates
 #' @param penalty        Specifies the IHT penalty
