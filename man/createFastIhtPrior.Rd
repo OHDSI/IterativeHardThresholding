@@ -40,7 +40,7 @@ An IHT Cyclops prior object of class inheriting from
 \code{"cyclopsPrior"} for use with \code{fitCyclopsModel}.
 }
 \description{
-\code{createFastIhtPrior} creates a fastIHT Cyclops prior object for use with \code{\link{fitCyclopsModel}}.
+\code{createFastIhtPrior} creates a fastIHT Cyclops prior object for use with \code{\link{Cyclops}{fitCyclopsModel}}.
 }
 \examples{
 nobs = 500; ncovs = 100
