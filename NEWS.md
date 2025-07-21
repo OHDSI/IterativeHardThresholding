@@ -1,3 +1,9 @@
+IterativeHardThresholding 1.0.3
+=============
+
+Changes: Fix documentation links to Cyclops
+
+
 IterativeHardThresholding 1.0.2
 =============
 
