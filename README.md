@@ -2,7 +2,9 @@ IterativeHardThresholding
 =======
 
 [![Build Status](https://github.com/ohdsi/IterativeHardThresholding/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/IterativeHardThresholding/actions?query=workflow%3AR-CMD-check)
-[![codecov.io](https://app.codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)](https://app.codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
+[![codecov.io](https://codecov.io/github/OHDSI/IterativeHardThresholding/coverage.svg?branch=main)](https://app.codecov.io/github/OHDSI/IterativeHardThresholding?branch=main)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/IterativeHardThresholding)](https://CRAN.R-project.org/package=IterativeHardThresholding)
+[![CRAN_Status_Badge](https://cranlogs.r-pkg.org/badges/IterativeHardThresholding)](https://cran.r-project.org/package=IterativeHardThresholding)
 
 `IterativeHardThresholding` is part of the [HADES](https://ohdsi.github.io/Hades/).
 
