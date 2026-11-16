@@ -1,4 +1,4 @@
-# @file fastIhtPrior.R
+# @file Prior.R
 #
 # Copyright 2022 Observational Health Data Sciences and Informatics
 #
@@ -18,68 +18,50 @@
 #
 # @author Marc A. Suchard
 
-#' @title Create a fastIHT Cyclops prior object
-#'
-#' @description
-#' \code{createFastIhtPrior} creates a fastIHT Cyclops prior object for use with \code{\link[Cyclops]{fitCyclopsModel}}.
-#'
-#' @param K              Maximum # of non-zero covariates
-#' @param penalty        Specifies the IHT penalty
-#' @param exclude        A vector of numbers or covariateId names to exclude from prior
-#' @param forceIntercept Logical: Force intercept coefficient into regularization
-#' @param fitBestSubset  Logical: Fit final subset with no regularization
-#' @param initialRidgeVariance Numeric: variance used for algorithm initiation
-#' @param tolerance Numeric: maximum abs change in coefficient estimates from successive iterations to achieve convergence
-#' @param maxIterations Numeric: maximum iterations to achieve convergence
-#' @param threshold     Numeric: absolute threshold at which to force coefficient to 0
-#'
-#' @examples
-#' nobs = 500; ncovs = 100
-#' prior <- createFastIhtPrior(K = 3, penalty = log(ncovs), initialRidgeVariance = 1 / log(ncovs))
-#'
-#' @return
-#' An IHT Cyclops prior object of class inheriting from
-#' \code{"cyclopsPrior"} for use with \code{fitCyclopsModel}.
-#'
-#' @import Cyclops
-#'
-#' @export
-createFastIhtPrior <- function(K,
-                               penalty = 0,
-                               exclude = c(),
-                               forceIntercept = FALSE,
-                               fitBestSubset = FALSE,
-                               initialRidgeVariance = 1E4,
-                               tolerance = 1E-8,
-                               maxIterations = 1E4,
-                               threshold = 1E-6) {
+# Version 1.0.3 of this package, kept unchanged (apart from how the prior object is built) so that earlier models
+# can be reproduced: createIhtPrior(K, algorithm = "legacy", penalty = "bic", ...). Deprecated.
+# The 1.0.3 behaviour is kept on purpose, including that K counts the intercept and excluded covariates.
 
-  # TODO Check that penalty (and other arguments) is valid
-
-  if (K < 1) {
+createLegacyPrior <- function(K, exclude, forceIntercept, args) {
+  defaults <- list(penalty = "bic", fitBestSubset = FALSE, initialRidgeVariance = 1E-1, tolerance = 1E-8,
+                   maxIterations = 1E4, threshold = 1E-6, delta = 0)
+  unknown <- setdiff(names(args), names(defaults))
+  if (length(unknown) > 0) stop("Unknown argument(s) for algorithm = \"legacy\": ", paste(unknown, collapse = ", "))
+  legacy <- utils::modifyList(defaults, args)
+  if (length(K) != 1 || K < 1) {
     stop("Maximum # of covariates must be >= 1")
   }
-
-  fitHook <- function(...) {
-    # closure to capture IHT parameters
-    fastIhtHook(fitBestSubset, initialRidgeVariance, tolerance,
-            maxIterations, threshold, ...)
-  }
-
+  warning("algorithm = \"legacy\" runs IterativeHardThresholding 1.0.3 (Broken Adaptive Ridge with a cap of K) ",
+          "and is deprecated; it will be removed in a future version.", call. = FALSE)
   structure(list(K = K,
-                 penalty = penalty,
+                 penalty = legacy$penalty,
                  exclude = exclude,
                  forceIntercept = forceIntercept,
-                 fitHook = fitHook),
-            class = "cyclopsPrior")
+                 algorithm = "legacy",
+                 legacy = legacy,
+                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+                                    startingCoefficients, fixedCoefficients, ...) {
+                   utils::getFromNamespace("legacyHook", "IterativeHardThresholding")(cyclopsData, prior, control, weights, forceNewObject,
+                                                          returnEstimates, startingCoefficients, fixedCoefficients)
+                 }),
+            class = c("cyclopsPrior", "ihtLegacyPrior"))
+}
+
+legacyHook <- function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+                       startingCoefficients, fixedCoefficients) {
+  a <- prior$legacy
+  ihtHook(a$fitBestSubset, a$initialRidgeVariance, a$tolerance, a$maxIterations, a$threshold, a$delta,
+          cyclopsData, prior, control, weights, forceNewObject, returnEstimates, startingCoefficients,
+          fixedCoefficients)
 }
 
 # Below are package-private functions
 
-fastIhtHook <- function(fitBestSubset,
+ihtHook <- function(fitBestSubset,
                     initialRidgeVariance,
                     tolerance,
                     maxIterations,
+                    cutoff,
                     delta,
                     cyclopsData,
                     ihtPrior,
@@ -97,10 +79,10 @@ fastIhtHook <- function(fitBestSubset,
                                                                                    initialRidgeVariance = initialRidgeVariance),
                                        control, weights, forceNewObject, returnEstimates, startingCoefficients, fixedCoefficients)
 
-  priorType <- createFastIhtPriorType(cyclopsData, ihtPrior$exclude, ihtPrior$forceIntercept)
+  priorType <- createIhtPriorType(cyclopsData, ihtPrior$exclude, ihtPrior$forceIntercept)
   include <- setdiff(c(1:Cyclops::getNumberOfCovariates(cyclopsData)), priorType$excludeIndices)
 
-  working_coef <- coef(startFit)
+  pre_coef <- coef(startFit)
   penalty <- getPenalty(cyclopsData, ihtPrior)
   K <- ihtPrior$K
 
@@ -109,29 +91,39 @@ fastIhtHook <- function(fitBestSubset,
   continue <- TRUE
   count <- 0
   converged <- FALSE
-  variance <- rep(1 / penalty, getNumberOfCovariates(cyclopsData)) #Create penalty for each covariate.
 
   while (continue) {
     count <- count + 1
 
-    #Note: Don't fix zeros as zero for next iteration.
-    #fixed <- working_coef == 0.0
+    working_coef <- ifelse(abs(pre_coef) <= cutoff, 0.0, pre_coef)
+    fixed <- working_coef == 0.0
+    variance <- abs(working_coef) ^ (2 - delta) / penalty
+
     if (!is.null(priorType$excludeIndices)) {
-      working_coef[priorType$excludeIndices]
-      #fixed[priorType$excludeIndices] <- FALSE
+      working_coef[priorType$excludeIndices] <- pre_coef[priorType$excludeIndices]
+      fixed[priorType$excludeIndices] <- FALSE
       variance[priorType$excludeIndices] <- 0
     }
 
     prior <- Cyclops::createPrior(priorType$types, variance = variance,
                                   forceIntercept = ihtPrior$forceIntercept)
-    #Fit fastIHT for one epoch
+
+    # TODO: Save current log-likelihood
+    # TODO: Set stepSizeMultiplier (we will hack in a function to do this for prototyping)
+
     fit <- Cyclops::fitCyclopsModel(cyclopsData,
                                     prior = prior,
-                                    control = createControl(convergenceType = "onestep"),
-                                    weights, forceNewObject,
-                                    startingCoefficients = working_coef)
+                                    control, weights, forceNewObject,
+                                    startingCoefficients = working_coef,
+                                    fixedCoefficients = fixed)
 
     coef <- coef(fit)
+
+    # TODO: Get new log-likelihood
+    # TODO: Compare new and current ll
+    # TODO: If moving in right direction
+    # TODO:   Then stepSizeMultiplier <- 1
+    # TODO:   Else stepSizeMultiplier <- stepSizeMultier / 2
 
     # IHT projection
     if (!is.null(priorType$excludeIndices)) {
@@ -157,11 +149,10 @@ fastIhtHook <- function(fitBestSubset,
     ParallelLogger::logTrace("\tCoef: ", coef[1:end], capture = TRUE)
     ParallelLogger::logTrace("")
 
-    #Check for convergence
-    if (max(abs(coef - working_coef)) < tolerance) {
+    if (max(abs(coef - pre_coef)) < tolerance) {
       converged <- TRUE
     } else {
-      working_coef <- coef
+      pre_coef <- coef
     }
 
     if (converged || count >= maxIterations) {
@@ -177,12 +168,10 @@ fastIhtHook <- function(fitBestSubset,
 
   if (fitBestSubset) {
     fit <- Cyclops::fitCyclopsModel(cyclopsData, prior = createPrior("none"),
-                                    control, weights, forceNewObject,
-                                    startingCoefficients = coef,
-                                    fixedCoefficients = (working_coef == 0))
+                                    control, weights, forceNewObject, fixedCoefficients = fixed)
   }
 
-  class(fit) <- c(class(fit), "cyclopsFastIhtFit")
+  class(fit) <- c(class(fit), "cyclopsIhtFit")
   fit$ihtConverged <- converged
   fit$ihtIterations <- count
   fit$penalty <- penalty
@@ -191,9 +180,17 @@ fastIhtHook <- function(fitBestSubset,
   return(fit)
 }
 
-createFastIhtPriorType <- function(cyclopsData,
+createIhtStartingPrior <- function(cyclopsData,
                                    exclude,
-                                   forceIntercept) {
+                                   forceIntercept,
+                                   initialRidgeVariance) {
+
+  Cyclops::createPrior("normal", variance = initialRidgeVariance, exclude = exclude, forceIntercept = forceIntercept)
+}
+
+createIhtPriorType <- function(cyclopsData,
+                               exclude,
+                               forceIntercept) {
 
   exclude <- Cyclops:::.checkCovariates(cyclopsData, exclude)
 
@@ -220,8 +217,7 @@ createFastIhtPriorType <- function(cyclopsData,
     indices <- which(covariateIds %in% exclude)
   }
 
-  # "Unpenalize" excluded covariates
-  types <- rep("barupdate", Cyclops::getNumberOfCovariates(cyclopsData))
+  types <- rep("normal", Cyclops::getNumberOfCovariates(cyclopsData))
   if (!is.null(exclude)) {
     types[indices] <- "none"
   }
@@ -231,3 +227,15 @@ createFastIhtPriorType <- function(cyclopsData,
        excludeIndices = indices)
 }
 
+getPenalty <- function(cyclopsData, ihtPrior) {
+
+  if (is.numeric(ihtPrior$penalty)) {
+    return(ihtPrior$penalty)
+  }
+
+  if (ihtPrior$penalty == "bic") {
+    return(log(Cyclops::getNumberOfRows(cyclopsData)) / 2) # TODO Handle stratified models
+  } else {
+    stop("Unhandled IHT penalty type")
+  }
+}

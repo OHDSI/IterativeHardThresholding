@@ -1,0 +1,108 @@
+# @file Hook.R
+#
+# Copyright 2026 Observational Health Data Sciences and Informatics
+#
+# This file is part of IterativeHardThresholding
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Called by Cyclops::fitCyclopsModel(cyclopsData, prior = createIhtPrior(...)), with cvFolds and returnCvPredictions
+# when the caller sets them.
+ihtFitHook <- function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+                       startingCoefficients, fixedCoefficients, cvFolds = NULL, returnCvPredictions = FALSE) {
+  if (!is.null(fixedCoefficients)) {
+    stop("fixedCoefficients are not supported with an IHT prior; use exclude for unpenalized covariates")
+  }
+  if (Cyclops::getNumberOfRows(cyclopsData) < 1) stop("No rows in the data")
+  # Settings are read from the prior object (they may have been through a JSON round trip)
+  K <- checkK(prior$K)
+  variance <- checkVariance(prior$variance)
+  ctl <- resolveControl(structure(as.list(prior$control), class = "ihtControl"), prior$algorithm)
+  if (is.null(ctl$maxSwap) || identical(ctl$maxSwap, "NA")) ctl$maxSwap <- NA
+  cvSettings <- prior$cv
+  if (!is.null(cvFolds)) cvSettings$cvFolds <- cvFolds
+  if (isTRUE(returnCvPredictions)) cvSettings$returnCvPredictions <- TRUE
+  # prior$keepControl = TRUE: Cyclops passes the control as given (it sets coordinate descent for other hooks)
+  # The caller's threads (e.g. PLP's) run the cross-validation folds in parallel; each refit uses IHT's own threads
+  foldThreads <- if (is.null(control$threads)) 1 else control$threads
+  if (foldThreads < 0) foldThreads <- parallel::detectCores()
+  control$threads <- if (is.null(ctl$threads)) 1 else ctl$threads
+
+  unpenalized <- unpenalizedIndices(cyclopsData, prior$exclude, prior$forceIntercept)
+  nPenalized <- Cyclops::getNumberOfCovariates(cyclopsData) - length(unpenalized)
+  if (max(K) > nPenalized) {
+    stop("K (", max(K), ") is larger than the number of penalized covariates (", nPenalized, ")")
+  }
+
+  tuning <- length(K) > 1 || identical(variance, "tune") || length(variance) > 1
+  cvResult <- NULL
+  if (tuning || isTRUE(cvSettings$returnCvPredictions)) {
+    cvResult <- crossValidate(cyclopsData, K, variance, ctl, control, weights, unpenalized, prior$forceIntercept,
+                              cvSettings, foldThreads = foldThreads)
+    K <- cvResult$K
+    variance <- cvResult$variance
+  }
+
+  pb <- newProblem(cyclopsData, unpenalized, variance, control, weights, prior$forceIntercept)
+  res <- runEngine(pb, K, ctl)
+  fit <- finalFit(pb, res$b)
+  class(fit) <- c(class(fit), "cyclopsIhtFit")
+  fit$iht <- list(algorithm = prior$algorithm, K = K, variance = variance, objective = res$F,
+                  converged = res$converged, iterations = res$iterations, steps = res$steps,
+                  splices = res$splices, refits = pb$refits,
+                  failedRefits = pb$failedRefits, support = pb$ids[res$T])
+  fit$ihtConverged <- res$converged
+  fit$ihtIterations <- res$iterations
+  if (!is.null(cvResult)) {
+    fit$iht$cv <- cvResult$table
+    if (isTRUE(cvSettings$returnCvPredictions)) fit$cvPredictions <- cvResult$predictions
+  }
+  if (!res$converged) {
+    warning("IHT did not converge in ", ctl$maxIterations, " iterations")
+  }
+  fit
+}
+
+runEngine <- function(pb, K, ctl, warm = NULL) {
+  if (ctl$exactRefits) exactEngine(pb, K, ctl, warm = warm) else gradientEngine(pb, K, ctl)
+}
+
+# A Cyclops fit object at coefficients b (all fixed), so coef(), predict() and the interface agree with b
+finalFit <- function(pb, b, weights = pb$weights) {
+  fit <- suppressWarnings(Cyclops::fitCyclopsModel(pb$data, prior = pb$prior, control = pb$control,
+                                                   weights = weights, startingCoefficients = b,
+                                                   fixedCoefficients = rep(TRUE, pb$p), warnings = FALSE))
+  fit
+}
+
+# Coefficient names in column order ("(Intercept)" for the intercept), from evaluateLikelihood at zero
+coefficientNames <- function(cyclopsData) {
+  names(Cyclops::evaluateLikelihood(cyclopsData, rep(0, Cyclops::getNumberOfCovariates(cyclopsData)))$gradient)
+}
+
+interceptIndex <- function(cyclopsData) which(coefficientNames(cyclopsData) == "(Intercept)")
+
+# exclude may hold covariate ids (numeric or integer64) or coefficient names
+unpenalizedIndices <- function(cyclopsData, exclude, forceIntercept) {
+  idx <- if (forceIntercept) integer(0) else interceptIndex(cyclopsData)
+  if (length(exclude) > 0) {
+    if (is.character(exclude)) {
+      hit <- match(exclude, coefficientNames(cyclopsData))
+    } else {
+      hit <- match(as.numeric(exclude), as.numeric(Cyclops::getCovariateIds(cyclopsData)))
+    }
+    if (anyNA(hit)) stop("exclude: covariate(s) not found: ", paste(exclude[is.na(hit)], collapse = ", "))
+    idx <- c(idx, hit)
+  }
+  sort(unique(idx))
+}

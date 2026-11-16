@@ -6,46 +6,62 @@
 \usage{
 createIhtPrior(
   K,
-  penalty = "bic",
+  variance = 1,
   exclude = c(),
   forceIntercept = FALSE,
-  fitBestSubset = FALSE,
-  initialRidgeVariance = 0.1,
-  tolerance = 1e-08,
-  maxIterations = 10000,
-  threshold = 1e-06,
-  delta = 0
+  algorithm = "default",
+  cv = createIhtCvControl(),
+  control = createIhtControl(),
+  ...
 )
 }
 \arguments{
-\item{K}{Maximum # of non-zero covariates}
+\item{K}{Number of non-zero penalized covariates: one value, or several to choose from by
+cross-validation. The intercept and \code{exclude} do not count.}
 
-\item{penalty}{Specifies the IHT penalty; possible values are `BIC` or `AIC` or a numeric value}
+\item{variance}{Ridge variance \eqn{\sigma^2}: one value (\code{Inf} for plain L0), several values to choose
+from by cross-validation, or \code{"tune"} for the default grid
+(0.01, 0.03, 0.1, 0.3, 1, 3 and \code{Inf}, extended when the best value is at its edge).}
 
-\item{exclude}{A vector of numbers or covariateId names to exclude from prior}
+\item{exclude}{Covariate ids or names that are not penalized and do not count towards \code{K}.}
 
-\item{forceIntercept}{Logical: Force intercept coefficient into regularization}
+\item{forceIntercept}{Logical: penalize the intercept and let it count towards \code{K}.}
 
-\item{fitBestSubset}{Logical: Fit final subset with no regularization}
+\item{algorithm}{\code{"default"}, \code{"chu2020"} or \code{"legacy"}. Sets the defaults of \code{control}.}
 
-\item{initialRidgeVariance}{Numeric: variance used for algorithm initiation}
+\item{cv}{Cross-validation settings, from \code{\link{createIhtCvControl}}.}
 
-\item{tolerance}{Numeric: maximum abs change in coefficient estimates from successive iterations to achieve convergence}
+\item{control}{Algorithm switches, from \code{\link{createIhtControl}}; \code{NULL} entries take the
+defaults of \code{algorithm}.}
 
-\item{maxIterations}{Numeric: maximum iterations to achieve convergence}
-
-\item{threshold}{Numeric: absolute threshold at which to force coefficient to 0}
-
-\item{delta}{Numeric: change from 2 in ridge norm dimension}
+\item{...}{Only with \code{algorithm = "legacy"}: the arguments of version 1.0.3 (\code{penalty},
+\code{fitBestSubset}, \code{initialRidgeVariance}, \code{tolerance}, \code{maxIterations},
+\code{threshold}, \code{delta}).}
 }
 \value{
-An IHT Cyclops prior object of class inheriting from
-\code{"cyclopsPrior"} for use with \code{fitCyclopsModel}.
+An IHT Cyclops prior object of class inheriting from \code{"cyclopsPrior"} for use with
+\code{fitCyclopsModel}.
 }
 \description{
-\code{createIhtPrior} creates an IHT Cyclops prior object for use with \code{\link[Cyclops]{fitCyclopsModel}}.
+\code{createIhtPrior} creates a prior for \code{\link[Cyclops]{fitCyclopsModel}} that keeps at most \code{K}
+non-zero penalized coefficients. It maximizes the log-likelihood minus a small ridge term,
+\deqn{\ell(\beta) - \sum_{j \in P} \beta_j^2 / (2 \sigma^2) \quad \textrm{subject to at most } K
+  \textrm{ non-zero } \beta_j, j \in P,}
+where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and \eqn{\sigma^2} is
+\code{variance}. \code{variance = Inf} is plain L0 (best subset of size \code{K}).
+
+The default algorithm fits the support exactly (Newton, Cyclops >= 4.0), moves by gradient hard-thresholding steps
+and by swaps of weak and strong covariates ("splicing"), and accepts a move only when it improves the objective.
+\code{algorithm = "chu2020"} runs iterative hard thresholding as in Chu et al. (2020) and their MendelIHT.jl.
+\code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a cap of \code{K};
+deprecated) so that earlier models can be reproduced.
 }
 \examples{
 prior <- createIhtPrior(K = 10)
 
+}
+\references{
+Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative hard thresholding
+in genome-wide association studies: Generalized linear models, prior weights, and double sparsity.
+GigaScience 9(6), giaa044.
 }
