@@ -22,9 +22,11 @@ The intercept and any `exclude`d covariates are not penalized and do not count t
 Features
 ========
 
-- **Exact fits on the support.** Each candidate support is fitted exactly (Newton, Cyclops >= 4.0.1). The search
+- **Exact fits on the support.** Each candidate support is fitted exactly (Newton, Cyclops >= 4.0.1), as in gradient
+  hard thresholding pursuit (Yuan et al. 2018) and Newton hard-thresholding pursuit (Zhou et al. 2021). The search
   moves by gradient hard-thresholding steps and by swapping weak covariates in the support for strong ones outside
-  ("splicing"), and accepts a move only if it improves the objective, so it always converges.
+  ("splicing", Zhu et al. 2020; swaps as in Beck and Eldar 2013 and L0Learn), and accepts a move only if it improves
+  the objective, so it always converges. The model is the one of Chu et al. (2020); only the optimizer is different.
 - **`algorithm = "chu2020"`** runs iterative hard thresholding as in Chu et al. (2020), and gives the same results as
   their MendelIHT.jl.
 - **Cross-validation** of `K` and the ridge `variance`, with the whole selection run inside each fold, and out-of-fold
@@ -89,7 +91,25 @@ References
 ==========
 Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative hard thresholding in
 genome-wide association studies: Generalized linear models, prior weights, and double sparsity. GigaScience 9(6),
-giaa044.
+giaa044. <https://doi.org/10.1093/gigascience/giaa044>
+
+The default algorithm builds on:
+
+- Bahmani S, Raj B, Boufounos PT (2013). Greedy sparsity-constrained optimization. Journal of Machine Learning
+  Research 14(25), 807-841. (GraSP: exact fits on the support, for logistic regression.)
+- Beck A, Eldar YC (2013). Sparsity constrained nonlinear optimization: optimality conditions and algorithms. SIAM
+  Journal on Optimization 23(3), 1480-1509. <https://doi.org/10.1137/120869778> (Optimality conditions based on swaps.)
+- Yuan XT, Li P, Zhang T (2018). Gradient hard thresholding pursuit. Journal of Machine Learning Research 18(166),
+  1-43. (A gradient hard-thresholding step, then an exact fit on the new support.)
+- Zhou S, Xiu N, Qi HD (2021). Global and quadratic convergence of Newton hard-thresholding pursuit. Journal of Machine
+  Learning Research 22(12), 1-45. (Newton steps on the support.)
+- Zhu J, Wen C, Zhu J, Zhang H, Wang X (2020). A polynomial algorithm for best-subset selection problem. Proceedings of
+  the National Academy of Sciences 117(52), 33117-33123. <https://doi.org/10.1073/pnas.2014241117> (abess: splicing.)
+- Hazimeh H, Mazumder R (2020). Fast best subset selection: coordinate descent and local combinatorial optimization
+  algorithms. Operations Research 68(5), 1517-1537. <https://doi.org/10.1287/opre.2019.1919> (L0Learn: L0 with a
+  ridge term, and swaps.)
+- Dedieu A, Hazimeh H, Mazumder R (2021). Learning sparse classifiers: continuous and mixed integer optimization
+  perspectives. Journal of Machine Learning Research 22(135), 1-47. (The same for logistic regression.)
 
 Getting Involved
 ================

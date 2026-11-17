@@ -26,8 +26,11 @@
 #' where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and \eqn{\sigma^2} is
 #' \code{variance}. \code{variance = Inf} is plain L0 (best subset of size \code{K}).
 #'
-#' The default algorithm fits the support exactly (Newton, Cyclops >= 4.0), moves by gradient hard-thresholding steps
-#' and by swaps of weak and strong covariates ("splicing"), and accepts a move only when it improves the objective.
+#' The model is the one of Chu et al. (2020); the default algorithm only optimizes it differently. It fits each support
+#' exactly (Newton, Cyclops >= 4.0), as in gradient hard thresholding pursuit (Yuan et al. 2018) and Newton
+#' hard-thresholding pursuit (Zhou et al. 2021). It moves by gradient hard-thresholding steps and by swaps of weak and
+#' strong covariates ("splicing", Zhu et al. 2020; see also Beck and Eldar 2013, Hazimeh and Mazumder 2020), and
+#' accepts a move only when it improves the objective.
 #' \code{algorithm = "chu2020"} runs iterative hard thresholding as in Chu et al. (2020) and their MendelIHT.jl.
 #' \code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example an earlier
 #' solution at a smaller \code{K}): their non-zero penalized coefficients form the starting support.
@@ -53,7 +56,28 @@
 #' @references
 #' Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative hard thresholding
 #' in genome-wide association studies: Generalized linear models, prior weights, and double sparsity.
-#' GigaScience 9(6), giaa044.
+#' GigaScience 9(6), giaa044. \doi{10.1093/gigascience/giaa044}
+#'
+#' Bahmani S, Raj B, Boufounos PT (2013). Greedy sparsity-constrained optimization. Journal of Machine Learning
+#' Research 14(25), 807-841.
+#'
+#' Beck A, Eldar YC (2013). Sparsity constrained nonlinear optimization: optimality conditions and algorithms.
+#' SIAM Journal on Optimization 23(3), 1480-1509. \doi{10.1137/120869778}
+#'
+#' Yuan XT, Li P, Zhang T (2018). Gradient hard thresholding pursuit. Journal of Machine Learning Research 18(166),
+#' 1-43.
+#'
+#' Zhou S, Xiu N, Qi HD (2021). Global and quadratic convergence of Newton hard-thresholding pursuit. Journal of
+#' Machine Learning Research 22(12), 1-45.
+#'
+#' Zhu J, Wen C, Zhu J, Zhang H, Wang X (2020). A polynomial algorithm for best-subset selection problem.
+#' Proceedings of the National Academy of Sciences 117(52), 33117-33123. \doi{10.1073/pnas.2014241117}
+#'
+#' Hazimeh H, Mazumder R (2020). Fast best subset selection: coordinate descent and local combinatorial optimization
+#' algorithms. Operations Research 68(5), 1517-1537. \doi{10.1287/opre.2019.1919}
+#'
+#' Dedieu A, Hazimeh H, Mazumder R (2021). Learning sparse classifiers: continuous and mixed integer optimization
+#' perspectives. Journal of Machine Learning Research 22(135), 1-47.
 #'
 #' @examples
 #' prior <- createIhtPrior(K = 10)
