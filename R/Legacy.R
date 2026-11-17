@@ -18,31 +18,38 @@
 #
 # @author Marc A. Suchard
 
-# Version 1.0.3 of this package, kept unchanged (apart from how the prior object is built) so that earlier models
-# can be reproduced: createIhtPrior(K, algorithm = "legacy", penalty = "bic", ...). Deprecated.
-# The 1.0.3 behaviour is kept on purpose, including that K counts the intercept and excluded covariates.
+# Version 1.0.3 of this package (Broken Adaptive Ridge with a projection onto the K largest
+# coefficients after each fit), kept unchanged apart from how the prior object is built, so that
+# earlier models can be reproduced: createIhtPrior(K, algorithm = "legacy", penalty = "bic", ...).
+# Deprecated. The 1.0.3 behaviour is kept on purpose, including that K counts the intercept and
+# excluded covariates.
 
 createLegacyPrior <- function(K, exclude, forceIntercept, args) {
-  defaults <- list(penalty = "bic", fitBestSubset = FALSE, initialRidgeVariance = 1E-1, tolerance = 1E-8,
-                   maxIterations = 1E4, threshold = 1E-6, delta = 0)
+  defaults <- list(penalty = "bic", fitBestSubset = FALSE, initialRidgeVariance = 1E-1,
+                   tolerance = 1E-8, maxIterations = 1E4, threshold = 1E-6, delta = 0)
   unknown <- setdiff(names(args), names(defaults))
-  if (length(unknown) > 0) stop("Unknown argument(s) for algorithm = \"legacy\": ", paste(unknown, collapse = ", "))
+  if (length(unknown) > 0) {
+    stop("Unknown argument(s) for algorithm = \"legacy\": ", paste(unknown, collapse = ", "))
+  }
   legacy <- utils::modifyList(defaults, args)
   if (length(K) != 1 || K < 1) {
     stop("Maximum # of covariates must be >= 1")
   }
-  warning("algorithm = \"legacy\" runs IterativeHardThresholding 1.0.3 (Broken Adaptive Ridge with a cap of K) ",
-          "and is deprecated; it will be removed in a future version.", call. = FALSE)
+  warning("algorithm = \"legacy\" runs IterativeHardThresholding 1.0.3 (Broken Adaptive Ridge ",
+          "with a projection onto the K largest coefficients) and is deprecated; it will be ",
+          "removed in a future version.", call. = FALSE)
   structure(list(K = K,
                  penalty = legacy$penalty,
                  exclude = exclude,
                  forceIntercept = forceIntercept,
                  algorithm = "legacy",
                  legacy = legacy,
-                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
-                                    startingCoefficients, fixedCoefficients, ...) {
-                   utils::getFromNamespace("legacyHook", "IterativeHardThresholding")(cyclopsData, prior, control, weights, forceNewObject,
-                                                          returnEstimates, startingCoefficients, fixedCoefficients)
+                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject,
+                                    returnEstimates, startingCoefficients, fixedCoefficients,
+                                    ...) {
+                   hook <- utils::getFromNamespace("legacyHook", "IterativeHardThresholding")
+                   hook(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+                        startingCoefficients, fixedCoefficients)
                  }),
             class = c("cyclopsPrior", "ihtLegacyPrior"))
 }
@@ -50,9 +57,9 @@ createLegacyPrior <- function(K, exclude, forceIntercept, args) {
 legacyHook <- function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
                        startingCoefficients, fixedCoefficients) {
   a <- prior$legacy
-  ihtHook(a$fitBestSubset, a$initialRidgeVariance, a$tolerance, a$maxIterations, a$threshold, a$delta,
-          cyclopsData, prior, control, weights, forceNewObject, returnEstimates, startingCoefficients,
-          fixedCoefficients)
+  ihtHook(a$fitBestSubset, a$initialRidgeVariance, a$tolerance, a$maxIterations, a$threshold,
+          a$delta, cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+          startingCoefficients, fixedCoefficients)
 }
 
 # Below are package-private functions
@@ -108,9 +115,6 @@ ihtHook <- function(fitBestSubset,
     prior <- Cyclops::createPrior(priorType$types, variance = variance,
                                   forceIntercept = ihtPrior$forceIntercept)
 
-    # TODO: Save current log-likelihood
-    # TODO: Set stepSizeMultiplier (we will hack in a function to do this for prototyping)
-
     fit <- Cyclops::fitCyclopsModel(cyclopsData,
                                     prior = prior,
                                     control, weights, forceNewObject,
@@ -118,12 +122,6 @@ ihtHook <- function(fitBestSubset,
                                     fixedCoefficients = fixed)
 
     coef <- coef(fit)
-
-    # TODO: Get new log-likelihood
-    # TODO: Compare new and current ll
-    # TODO: If moving in right direction
-    # TODO:   Then stepSizeMultiplier <- 1
-    # TODO:   Else stepSizeMultiplier <- stepSizeMultier / 2
 
     # IHT projection
     if (!is.null(priorType$excludeIndices)) {
@@ -234,7 +232,7 @@ getPenalty <- function(cyclopsData, ihtPrior) {
   }
 
   if (ihtPrior$penalty == "bic") {
-    return(log(Cyclops::getNumberOfRows(cyclopsData)) / 2) # TODO Handle stratified models
+    return(log(Cyclops::getNumberOfRows(cyclopsData)) / 2)
   } else {
     stop("Unhandled IHT penalty type")
   }

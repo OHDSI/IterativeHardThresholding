@@ -6,22 +6,22 @@ Date: 2026-11-16
 Authors@R: c(
     person("Marc A.", "Suchard", email = "msuchard@ucla.edu", role = c("aut","cre")),
     person("Patrick", "Ryan", role = "aut"),
+    person("Egill", "Fridgeirsson", email = "e.fridgeirsson@erasmusmc.nl", role = "aut"),
     person("Observational Health Data Sciences and Informatics", role = "cph")
     )
 Maintainer: Marc A. Suchard <msuchard@ucla.edu>
-Description: Fits large-scale regression models with at most a prespecified number of
-  non-zero regression coefficients (L0 regression with an optional ridge term), using Cyclops.
-  The model is the one of Chu et al (2020) <doi:10.1093/gigascience/giaa044>. Each support is fitted
-  exactly, as in Newton hard-thresholding pursuit (Zhou, Xiu and Qi 2021,
-  <https://jmlr.org/papers/v22/19-026.html>), and the search combines gradient hard-thresholding steps
-  with swaps of weak and strong covariates, as in Zhu et al (2020) <doi:10.1073/pnas.2014241117>.
-  The algorithm of Chu et al (2020) is also available as is.
+Description: Fits large-scale regression models with at most a prespecified number of non-zero
+    regression coefficients (L0 regression with an optional ridge term), using Cyclops. The
+    model is the one of Chu et al (2020) <doi:10.1093/gigascience/giaa044>. Each support is
+    fitted exactly, as in Newton hard-thresholding pursuit (Zhou, Xiu and Qi 2021,
+    <https://jmlr.org/papers/v22/19-026.html>), and the search combines gradient
+    hard-thresholding steps with swaps of weak and strong covariates, as in Zhu et al (2020)
+    <doi:10.1073/pnas.2014241117>. The algorithm of Chu et al (2020) is also available as is.
 License: Apache License 2.0
 Depends:
-    R (>= 3.2.2),
+    R (>= 3.5.0),
     Cyclops (>= 4.0.1)
 Imports:
-    parallel,
     ParallelLogger,
     stats,
     utils
@@ -29,8 +29,6 @@ Remotes:
     ohdsi/Cyclops@develop
 Suggests:
     survival,
-    testthat,
-    knitr,
-    rmarkdown
+    testthat
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0

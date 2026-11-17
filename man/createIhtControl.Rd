@@ -19,40 +19,45 @@ createIhtControl(
 )
 }
 \arguments{
-\item{exactRefits}{Fit each support exactly (Newton). \code{FALSE} runs plain IHT iterations (gradient step,
-top-\code{K} projection, backtracking) as in Chu et al. (2020); default \code{TRUE},
-\code{"chu2020"}: \code{FALSE}.}
+\item{exactRefits}{Fit each support exactly (Newton). \code{FALSE} runs plain IHT
+iterations (gradient step, top-\code{K} projection, backtracking) as in
+Chu et al. (2020); default \code{TRUE}, \code{"chu2020"}: \code{FALSE}.}
 
-\item{thresholdSteps}{With exact refits: try a gradient hard-thresholding step before splicing.}
+\item{thresholdSteps}{With exact refits: try a gradient hard-thresholding step before
+splicing.}
 
-\item{splicing}{With exact refits: swap the weakest covariates in the support for the strongest outside.}
+\item{splicing}{With exact refits: swap the weakest covariates in the support for the
+strongest outside.}
 
-\item{start}{With exact refits: \code{"gradient"} starts from the \code{K} covariates with the largest
-\eqn{|g_j|} in the model with only the unpenalized covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain
-IHT iterations until the support is stable for 10 iterations.}
+\item{start}{With exact refits: \code{"gradient"} starts from the \code{K} covariates
+with the largest \eqn{|g_j|} in the model with only the unpenalized
+covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain IHT
+iterations until the support is stable for 10 iterations.}
 
-\item{strictAcceptance}{Accept a move only if it improves the objective by more than \code{tolerance}.
-\code{FALSE} accepts the last backtracking trial, as Chu et al. (2020) do.}
+\item{strictAcceptance}{Accept a move only if it improves the objective by more than
+\code{tolerance}. \code{FALSE} accepts the last backtracking trial, as
+Chu et al. (2020) do.}
 
 \item{maxHalve}{Maximum step halvings per iteration (default 5; \code{"chu2020"}: 3).}
 
 \item{maxSwap}{Largest swap size; default \code{ceiling(K / 4)}.}
 
-\item{tolerance}{With exact refits: smallest objective gain that counts as an improvement (default 1e-3).
-Without: the convergence tolerance on the scaled change in coefficients (1e-4).}
+\item{tolerance}{With exact refits: smallest objective gain that counts as an improvement
+(default 1e-3). Without: the convergence tolerance on the scaled change
+in coefficients (1e-4).}
 
 \item{minIterations}{Without exact refits: minimum iterations before testing convergence (5).}
 
 \item{maxIterations}{Maximum iterations (200).}
 
-\item{threads}{Threads for the refits and evaluations (default 1: the refits on a small support are faster
-on one thread than on several).}
+\item{threads}{Threads for the refits and evaluations (default 1: the refits on a small
+support are faster on one thread than on several).}
 }
 \value{
 An object of class \code{"ihtControl"}.
 }
 \description{
 Every switch defaults to \code{NULL}, which takes the value of the \code{algorithm} given to
-\code{\link{createIhtPrior}}. The switches exist so that each part of the default algorithm can be turned off
-and compared with the algorithm of Chu et al. (2020).
+\code{\link{createIhtPrior}}. The switches exist so that each part of the default algorithm can
+be turned off and compared with the algorithm of Chu et al. (2020).
 }

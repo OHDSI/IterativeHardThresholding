@@ -8,8 +8,8 @@ test_that("arguments are checked", {
   expect_error(createIhtPrior(K = 2, algorithm = "other"))
   expect_equal(createIhtPrior(K = 2, variance = "Inf")$variance, Inf)
   expect_equal(createIhtPrior(K = 2, variance = "inf")$variance, Inf)
-  expect_equal(createIhtPrior(K = c(5, 2, 5))$K, c(2L, 5L))
-  expect_equal(createIhtPrior(K = 2, variance = "tune")$variance, "tune")
+  expect_error(createIhtPrior(K = c(2, 5)), "one whole number")
+  expect_error(createIhtPrior(K = 2, variance = c(0.1, 1)), "one positive number")
 })
 
 test_that("presets and switches", {
@@ -20,9 +20,11 @@ test_that("presets and switches", {
   expect_false(p$control$exactRefits)
   expect_false(p$control$splicing)
   expect_equal(p$control$maxHalve, 3)
-  p <- createIhtPrior(K = 2, algorithm = "chu2020", control = createIhtControl(maxIterations = 1000))
+  p <- createIhtPrior(K = 2, algorithm = "chu2020",
+                      control = createIhtControl(maxIterations = 1000))
   expect_equal(p$control$maxIterations, 1000)
-  expect_error(createIhtPrior(K = 2, control = createIhtControl(exactRefits = FALSE, splicing = TRUE)))
+  expect_error(createIhtPrior(K = 2,
+                              control = createIhtControl(exactRefits = FALSE, splicing = TRUE)))
   expect_equal(createIhtPrior(K = 2)$control$start, "gradient")
   expect_error(createIhtPrior(K = 2, control = createIhtControl(start = "other")))
   expect_equal(createIhtPrior(K = 2)$variance, 1)
@@ -35,7 +37,7 @@ test_that("JSON round trip", {
   restored <- ParallelLogger::loadSettingsFromJson(fileName)
   unlink(fileName)
   s <- simulateBinary()
-  a <- Cyclops::fitCyclopsModel(s$data, prior = prior, control = silent())
-  b <- Cyclops::fitCyclopsModel(simulateBinary()$data, prior = restored, control = silent())
+  a <- fitIht(s$data, prior)
+  b <- fitIht(simulateBinary()$data, restored)
   expect_equal(coef(a), coef(b))
 })

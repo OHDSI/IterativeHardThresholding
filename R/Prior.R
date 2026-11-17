@@ -19,65 +19,75 @@
 #' @title Create an IHT Cyclops prior object
 #'
 #' @description
-#' \code{createIhtPrior} creates a prior for \code{\link[Cyclops]{fitCyclopsModel}} that keeps at most \code{K}
-#' non-zero penalized coefficients. It maximizes the log-likelihood minus a small ridge term,
+#' \code{createIhtPrior} creates a prior for \code{\link[Cyclops]{fitCyclopsModel}} that keeps at
+#' most \code{K} non-zero penalized coefficients. It maximizes the log-likelihood minus a small
+#' ridge term,
 #' \deqn{\ell(\beta) - \sum_{j \in P} \beta_j^2 / (2 \sigma^2) \quad \textrm{subject to at most } K
 #'   \textrm{ non-zero } \beta_j, j \in P,}
-#' where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and \eqn{\sigma^2} is
-#' \code{variance}. \code{variance = Inf} is plain L0 (best subset of size \code{K}).
+#' where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and
+#' \eqn{\sigma^2} is \code{variance}. \code{variance = Inf} is plain L0 (best subset of size
+#' \code{K}).
 #'
-#' The model is the one of Chu et al. (2020); the default algorithm only optimizes it differently. It fits each support
-#' exactly (Newton, Cyclops >= 4.0), as in gradient hard thresholding pursuit (Yuan et al. 2018) and Newton
-#' hard-thresholding pursuit (Zhou et al. 2021). It moves by gradient hard-thresholding steps and by swaps of weak and
-#' strong covariates ("splicing", Zhu et al. 2020; see also Beck and Eldar 2013, Hazimeh and Mazumder 2020), and
-#' accepts a move only when it improves the objective.
-#' \code{algorithm = "chu2020"} runs iterative hard thresholding as in Chu et al. (2020) and their MendelIHT.jl.
-#' \code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example an earlier
-#' solution at a smaller \code{K}): their non-zero penalized coefficients form the starting support.
+#' The model is the one of Chu et al. (2020); the default algorithm only optimizes it differently.
+#' It fits each support exactly (Newton, Cyclops >= 4.0), as in gradient hard thresholding pursuit
+#' (Yuan et al. 2018) and Newton hard-thresholding pursuit (Zhou et al. 2021). It moves by gradient
+#' hard-thresholding steps and by swaps of weak and strong covariates ("splicing", Zhu et al. 2020;
+#' see also Beck and Eldar 2013, Hazimeh and Mazumder 2020), and accepts a move only when it
+#' improves the objective.
+#' \code{algorithm = "chu2020"} runs iterative hard thresholding as in Chu et al. (2020) and their
+#' MendelIHT.jl.
 #'
-#' \code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a cap of \code{K};
-#' deprecated) so that earlier models can be reproduced.
+#' \code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example
+#' an earlier solution at a smaller \code{K}): their non-zero penalized coefficients form the
+#' starting support. \code{K} and \code{variance} are chosen by the caller, for example by
+#' cross-validation in PatientLevelPrediction. \code{fitCyclopsModel(..., returnCvPredictions =
+#' TRUE)} returns out-of-fold predictions at the given \code{K} and \code{variance}.
 #'
-#' @param K              Number of non-zero penalized covariates: one value, or several to choose from by
-#'                       cross-validation. The intercept and \code{exclude} do not count.
-#' @param variance       Ridge variance \eqn{\sigma^2}: one value (\code{Inf} for plain L0), several values to choose
-#'                       from by cross-validation, or \code{"tune"} for the default grid
-#'                       (0.01, 0.03, 0.1, 0.3, 1, 3 and \code{Inf}, extended when the best value is at its edge).
-#' @param exclude        Covariate ids or names that are not penalized and do not count towards \code{K}.
+#' \code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a
+#' projection onto the \code{K} largest coefficients after each fit; deprecated) so that earlier
+#' models can be reproduced.
+#'
+#' @param K              Number of non-zero penalized covariates. The intercept and \code{exclude}
+#'                       do not count.
+#' @param variance       Ridge variance \eqn{\sigma^2} (\code{Inf} for plain L0).
+#' @param exclude        Covariate ids or names that are not penalized and do not count towards
+#'                       \code{K}.
 #' @param forceIntercept Logical: penalize the intercept and let it count towards \code{K}.
-#' @param algorithm      \code{"default"}, \code{"chu2020"} or \code{"legacy"}. Sets the defaults of \code{control}.
-#' @param cv             Cross-validation settings, from \code{\link{createIhtCvControl}}.
-#' @param control        Algorithm switches, from \code{\link{createIhtControl}}; \code{NULL} entries take the
-#'                       defaults of \code{algorithm}.
-#' @param ...            Only with \code{algorithm = "legacy"}: the arguments of version 1.0.3 (\code{penalty},
-#'                       \code{fitBestSubset}, \code{initialRidgeVariance}, \code{tolerance}, \code{maxIterations},
-#'                       \code{threshold}, \code{delta}).
+#' @param algorithm      \code{"default"}, \code{"chu2020"} or \code{"legacy"}. Sets the defaults of
+#'                       \code{control}.
+#' @param control        Algorithm switches, from \code{\link{createIhtControl}}; \code{NULL}
+#'                       entries take the defaults of \code{algorithm}.
+#' @param ...            Only with \code{algorithm = "legacy"}: the arguments of version 1.0.3
+#'                       (\code{penalty}, \code{fitBestSubset}, \code{initialRidgeVariance},
+#'                       \code{tolerance}, \code{maxIterations}, \code{threshold}, \code{delta}).
 #'
 #' @references
-#' Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative hard thresholding
-#' in genome-wide association studies: Generalized linear models, prior weights, and double sparsity.
-#' GigaScience 9(6), giaa044. \doi{10.1093/gigascience/giaa044}
+#' Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative
+#' hard thresholding in genome-wide association studies: Generalized linear models, prior weights,
+#' and double sparsity. GigaScience 9(6), giaa044. \doi{10.1093/gigascience/giaa044}
 #'
-#' Bahmani S, Raj B, Boufounos PT (2013). Greedy sparsity-constrained optimization. Journal of Machine Learning
-#' Research 14(25), 807-841.
+#' Bahmani S, Raj B, Boufounos PT (2013). Greedy sparsity-constrained optimization. Journal of
+#' Machine Learning Research 14(25), 807-841.
 #'
-#' Beck A, Eldar YC (2013). Sparsity constrained nonlinear optimization: optimality conditions and algorithms.
-#' SIAM Journal on Optimization 23(3), 1480-1509. \doi{10.1137/120869778}
+#' Beck A, Eldar YC (2013). Sparsity constrained nonlinear optimization: optimality conditions and
+#' algorithms. SIAM Journal on Optimization 23(3), 1480-1509. \doi{10.1137/120869778}
 #'
-#' Yuan XT, Li P, Zhang T (2018). Gradient hard thresholding pursuit. Journal of Machine Learning Research 18(166),
-#' 1-43.
+#' Yuan XT, Li P, Zhang T (2018). Gradient hard thresholding pursuit. Journal of Machine Learning
+#' Research 18(166), 1-43.
 #'
-#' Zhou S, Xiu N, Qi HD (2021). Global and quadratic convergence of Newton hard-thresholding pursuit. Journal of
-#' Machine Learning Research 22(12), 1-45.
+#' Zhou S, Xiu N, Qi HD (2021). Global and quadratic convergence of Newton hard-thresholding
+#' pursuit. Journal of Machine Learning Research 22(12), 1-45.
 #'
-#' Zhu J, Wen C, Zhu J, Zhang H, Wang X (2020). A polynomial algorithm for best-subset selection problem.
-#' Proceedings of the National Academy of Sciences 117(52), 33117-33123. \doi{10.1073/pnas.2014241117}
+#' Zhu J, Wen C, Zhu J, Zhang H, Wang X (2020). A polynomial algorithm for best-subset selection
+#' problem. Proceedings of the National Academy of Sciences 117(52), 33117-33123.
+#' \doi{10.1073/pnas.2014241117}
 #'
-#' Hazimeh H, Mazumder R (2020). Fast best subset selection: coordinate descent and local combinatorial optimization
-#' algorithms. Operations Research 68(5), 1517-1537. \doi{10.1287/opre.2019.1919}
+#' Hazimeh H, Mazumder R (2020). Fast best subset selection: coordinate descent and local
+#' combinatorial optimization algorithms. Operations Research 68(5), 1517-1537.
+#' \doi{10.1287/opre.2019.1919}
 #'
-#' Dedieu A, Hazimeh H, Mazumder R (2021). Learning sparse classifiers: continuous and mixed integer optimization
-#' perspectives. Journal of Machine Learning Research 22(135), 1-47.
+#' Dedieu A, Hazimeh H, Mazumder R (2021). Learning sparse classifiers: continuous and mixed integer
+#' optimization perspectives. Journal of Machine Learning Research 22(135), 1-47.
 #'
 #' @examples
 #' prior <- createIhtPrior(K = 10)
@@ -87,7 +97,7 @@
 #' \code{fitCyclopsModel}.
 #'
 #' @import Cyclops
-#' @importFrom stats coef predict
+#' @importFrom stats coef
 #'
 #' @export
 createIhtPrior <- function(K,
@@ -95,7 +105,6 @@ createIhtPrior <- function(K,
                            exclude = c(),
                            forceIntercept = FALSE,
                            algorithm = "default",
-                           cv = createIhtCvControl(),
                            control = createIhtControl(),
                            ...) {
   algorithm <- match.arg(algorithm, c("default", "chu2020", "legacy"))
@@ -103,7 +112,8 @@ createIhtPrior <- function(K,
   if (algorithm == "legacy") {
     return(createLegacyPrior(K, exclude, forceIntercept, legacyArgs))
   }
-  barOnly <- c("penalty", "fitBestSubset", "initialRidgeVariance", "tolerance", "maxIterations", "threshold", "delta")
+  barOnly <- c("penalty", "fitBestSubset", "initialRidgeVariance", "tolerance", "maxIterations",
+               "threshold", "delta")
   if (length(legacyArgs) > 0) {
     if (is.null(names(legacyArgs)) || any(names(legacyArgs) == "")) {
       stop("createIhtPrior: unnamed extra arguments")
@@ -112,20 +122,21 @@ createIhtPrior <- function(K,
     if (length(unknown) > 0) {
       stop("Unknown argument(s) to createIhtPrior: ", paste(unknown, collapse = ", "))
     }
-    stop("Argument(s) ", paste(names(legacyArgs), collapse = ", "), " belong to the method of version 1.0.3 (Broken ",
-         "Adaptive Ridge with a cap of K), which version 2.0.0 replaced. Use algorithm = \"legacy\" to reproduce ",
+    stop("Argument(s) ", paste(names(legacyArgs), collapse = ", "), " belong to the method of ",
+         "version 1.0.3 (Broken Adaptive Ridge with a projection onto the K largest ",
+         "coefficients), which version 2.0.0 replaced. Use algorithm = \"legacy\" to reproduce ",
          "earlier models, or see NEWS for the new arguments.")
   }
   if (is.character(variance) && length(variance) == 1 && tolower(variance) %in% c("bic", "aic")) {
-    stop("variance = \"", variance, "\": the BIC/AIC penalty of version 1.0.3 is gone. Use algorithm = \"legacy\" ",
-         "with penalty = \"", variance, "\" to reproduce earlier models, or see NEWS.")
+    stop("variance = \"", variance, "\": the BIC/AIC penalty of version 1.0.3 is gone. Use ",
+         "algorithm = \"legacy\" with penalty = \"", variance, "\" to reproduce earlier models, ",
+         "or see NEWS.")
   }
   K <- checkK(K)
   variance <- checkVariance(variance)
   if (!is.logical(forceIntercept) || length(forceIntercept) != 1) {
     stop("forceIntercept must be TRUE or FALSE")
   }
-  if (!inherits(cv, "ihtCvControl")) stop("cv must come from createIhtCvControl()")
   if (!inherits(control, "ihtControl")) stop("control must come from createIhtControl()")
   control <- resolveControl(control, algorithm)
 
@@ -134,17 +145,15 @@ createIhtPrior <- function(K,
                  exclude = exclude,
                  forceIntercept = forceIntercept,
                  algorithm = algorithm,
-                 cv = cv,
                  control = control,
                  keepControl = TRUE,
-                 # reads everything from the prior object, so the hook survives a JSON round trip
-                 # names cvFolds and returnCvPredictions, so Cyclops passes them (other hooks get its per-fold fallback)
-                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
-                                    startingCoefficients, fixedCoefficients, cvFolds = NULL,
-                                    returnCvPredictions = FALSE, ...) {
-                   utils::getFromNamespace("ihtFitHook", "IterativeHardThresholding")(
-                     cyclopsData, prior, control, weights, forceNewObject, returnEstimates, startingCoefficients,
-                     fixedCoefficients, cvFolds = cvFolds, returnCvPredictions = returnCvPredictions)
+                 # reads everything from the prior object, so it survives a JSON round trip
+                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject,
+                                    returnEstimates, startingCoefficients, fixedCoefficients,
+                                    ...) {
+                   hook <- utils::getFromNamespace("ihtFitHook", "IterativeHardThresholding")
+                   hook(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
+                        startingCoefficients, fixedCoefficients)
                  }),
             class = c("cyclopsPrior", "ihtPrior"))
 }
@@ -153,27 +162,32 @@ createIhtPrior <- function(K,
 #'
 #' @description
 #' Every switch defaults to \code{NULL}, which takes the value of the \code{algorithm} given to
-#' \code{\link{createIhtPrior}}. The switches exist so that each part of the default algorithm can be turned off
-#' and compared with the algorithm of Chu et al. (2020).
+#' \code{\link{createIhtPrior}}. The switches exist so that each part of the default algorithm can
+#' be turned off and compared with the algorithm of Chu et al. (2020).
 #'
-#' @param exactRefits      Fit each support exactly (Newton). \code{FALSE} runs plain IHT iterations (gradient step,
-#'                         top-\code{K} projection, backtracking) as in Chu et al. (2020); default \code{TRUE},
-#'                         \code{"chu2020"}: \code{FALSE}.
-#' @param thresholdSteps   With exact refits: try a gradient hard-thresholding step before splicing.
-#' @param splicing         With exact refits: swap the weakest covariates in the support for the strongest outside.
-#' @param start            With exact refits: \code{"gradient"} starts from the \code{K} covariates with the largest
-#'                         \eqn{|g_j|} in the model with only the unpenalized covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain
-#'                         IHT iterations until the support is stable for 10 iterations.
-#' @param strictAcceptance Accept a move only if it improves the objective by more than \code{tolerance}.
-#'                         \code{FALSE} accepts the last backtracking trial, as Chu et al. (2020) do.
+#' @param exactRefits      Fit each support exactly (Newton). \code{FALSE} runs plain IHT
+#'                         iterations (gradient step, top-\code{K} projection, backtracking) as in
+#'                         Chu et al. (2020); default \code{TRUE}, \code{"chu2020"}: \code{FALSE}.
+#' @param thresholdSteps   With exact refits: try a gradient hard-thresholding step before
+#'                         splicing.
+#' @param splicing         With exact refits: swap the weakest covariates in the support for the
+#'                         strongest outside.
+#' @param start            With exact refits: \code{"gradient"} starts from the \code{K} covariates
+#'                         with the largest \eqn{|g_j|} in the model with only the unpenalized
+#'                         covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain IHT
+#'                         iterations until the support is stable for 10 iterations.
+#' @param strictAcceptance Accept a move only if it improves the objective by more than
+#'                         \code{tolerance}. \code{FALSE} accepts the last backtracking trial, as
+#'                         Chu et al. (2020) do.
 #' @param maxHalve         Maximum step halvings per iteration (default 5; \code{"chu2020"}: 3).
 #' @param maxSwap          Largest swap size; default \code{ceiling(K / 4)}.
-#' @param tolerance        With exact refits: smallest objective gain that counts as an improvement (default 1e-3).
-#'                         Without: the convergence tolerance on the scaled change in coefficients (1e-4).
+#' @param tolerance        With exact refits: smallest objective gain that counts as an improvement
+#'                         (default 1e-3). Without: the convergence tolerance on the scaled change
+#'                         in coefficients (1e-4).
 #' @param minIterations    Without exact refits: minimum iterations before testing convergence (5).
 #' @param maxIterations    Maximum iterations (200).
-#' @param threads          Threads for the refits and evaluations (default 1: the refits on a small support are faster
-#'                         on one thread than on several).
+#' @param threads          Threads for the refits and evaluations (default 1: the refits on a small
+#'                         support are faster on one thread than on several).
 #'
 #' @return An object of class \code{"ihtControl"}.
 #'
@@ -190,40 +204,10 @@ createIhtControl <- function(exactRefits = NULL,
                              maxIterations = NULL,
                              threads = NULL) {
   ctl <- list(exactRefits = exactRefits, thresholdSteps = thresholdSteps, splicing = splicing,
-              start = start, strictAcceptance = strictAcceptance,
-              maxHalve = maxHalve, maxSwap = maxSwap, tolerance = tolerance, minIterations = minIterations,
+              start = start, strictAcceptance = strictAcceptance, maxHalve = maxHalve,
+              maxSwap = maxSwap, tolerance = tolerance, minIterations = minIterations,
               maxIterations = maxIterations, threads = threads)
   structure(ctl, class = "ihtControl")
-}
-
-#' @title Cross-validation settings for IHT
-#'
-#' @description
-#' Cross-validation runs when \code{K} or \code{variance} has more than one candidate, or when out-of-fold
-#' predictions are requested. Each fold runs the whole selection on its training rows, so the out-of-fold
-#' predictions do not use the held-out rows.
-#'
-#' @param folds              Number of folds when \code{cvFolds} is not given.
-#' @param cvFolds            Optional \code{data.frame(rowId, fold)} assigning rows to folds.
-#' @param seed               Seed for the random fold assignment (\code{NULL}: not set).
-#' @param oneStandardError   Choose the smallest \code{K} whose mean held-out log-likelihood is within one standard
-#'                           error of the best, instead of the best.
-#' @param returnCvPredictions Return the out-of-fold predictions at the chosen \code{K} and variance.
-#'
-#' @return An object of class \code{"ihtCvControl"}.
-#'
-#' @export
-createIhtCvControl <- function(folds = 3,
-                               cvFolds = NULL,
-                               seed = NULL,
-                               oneStandardError = FALSE,
-                               returnCvPredictions = FALSE) {
-  if (!is.null(cvFolds) && !all(c("rowId", "fold") %in% names(cvFolds))) {
-    stop("cvFolds must be a data.frame with columns rowId and fold")
-  }
-  structure(list(folds = folds, cvFolds = cvFolds, seed = seed, oneStandardError = oneStandardError,
-                 returnCvPredictions = returnCvPredictions),
-            class = "ihtCvControl")
 }
 
 # ---- package-private
@@ -253,21 +237,19 @@ resolveControl <- function(control, algorithm) {
 }
 
 checkK <- function(K) {
-  if (!is.numeric(K) || length(K) < 1 || any(is.na(K)) || any(K < 1) || any(K != round(K))) {
-    stop("K must be one or more whole numbers >= 1")
+  if (!is.numeric(K) || length(K) != 1 || is.na(K) || K < 1 || K != round(K)) {
+    stop("K must be one whole number >= 1")
   }
-  sort(unique(as.integer(K)))
+  as.integer(K)
 }
 
+# "Inf" as text is accepted, since a JSON round trip turns Inf into a string
 checkVariance <- function(variance) {
-  if (is.character(variance)) {
-    if (length(variance) == 1 && variance == "tune") return("tune")
-    v <- suppressWarnings(as.numeric(ifelse(tolower(variance) == "inf", "Inf", variance)))
-    if (any(is.na(v))) stop("variance must be numeric (Inf allowed) or \"tune\"")
-    variance <- v
+  if (is.character(variance) && length(variance) == 1 && tolower(variance) == "inf") {
+    variance <- Inf
   }
-  if (!is.numeric(variance) || length(variance) < 1 || any(is.na(variance)) || any(variance <= 0)) {
-    stop("variance must be positive (Inf allowed), or \"tune\"")
+  if (!is.numeric(variance) || length(variance) != 1 || is.na(variance) || variance <= 0) {
+    stop("variance must be one positive number (Inf allowed)")
   }
-  sort(unique(variance))
+  variance
 }
