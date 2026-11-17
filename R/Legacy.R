@@ -1,4 +1,4 @@
-# @file Prior.R
+# @file Legacy.R
 #
 # Copyright 2022 Observational Health Data Sciences and Informatics
 #
@@ -24,16 +24,22 @@
 # Deprecated. The 1.0.3 behaviour is kept on purpose, including that K counts the intercept and
 # excluded covariates.
 
+# The arguments of version 1.0.3 and their defaults
+legacyDefaults <- list(penalty = "bic", fitBestSubset = FALSE, initialRidgeVariance = 1E-1,
+                       tolerance = 1E-8, maxIterations = 1E4, threshold = 1E-6, delta = 0)
+
 createLegacyPrior <- function(K, exclude, forceIntercept, args) {
-  defaults <- list(penalty = "bic", fitBestSubset = FALSE, initialRidgeVariance = 1E-1,
-                   tolerance = 1E-8, maxIterations = 1E4, threshold = 1E-6, delta = 0)
-  unknown <- setdiff(names(args), names(defaults))
+  unknown <- setdiff(names(args), names(legacyDefaults))
   if (length(unknown) > 0) {
     stop("Unknown argument(s) for algorithm = \"legacy\": ", paste(unknown, collapse = ", "))
   }
-  legacy <- utils::modifyList(defaults, args)
+  legacy <- utils::modifyList(legacyDefaults, args)
   if (length(K) != 1 || K < 1) {
     stop("Maximum # of covariates must be >= 1")
+  }
+  # 1.0.3 accepted only these, and stopped with "Unhandled IHT penalty type" at fit time otherwise
+  if (!(is.numeric(legacy$penalty) || identical(legacy$penalty, "bic"))) {
+    stop("penalty must be a number or \"bic\"")
   }
   warning("algorithm = \"legacy\" runs IterativeHardThresholding 1.0.3 (Broken Adaptive Ridge ",
           "with a projection onto the K largest coefficients) and is deprecated; it will be ",
@@ -44,13 +50,7 @@ createLegacyPrior <- function(K, exclude, forceIntercept, args) {
                  forceIntercept = forceIntercept,
                  algorithm = "legacy",
                  legacy = legacy,
-                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject,
-                                    returnEstimates, startingCoefficients, fixedCoefficients,
-                                    ...) {
-                   hook <- utils::getFromNamespace("legacyHook", "IterativeHardThresholding")
-                   hook(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
-                        startingCoefficients, fixedCoefficients)
-                 }),
+                 fitHook = fitHook),
             class = c("cyclopsPrior", "ihtLegacyPrior"))
 }
 

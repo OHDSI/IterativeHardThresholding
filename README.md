@@ -13,7 +13,7 @@ Introduction
 
 `IterativeHardThresholding` fits regression models with at most `K` non-zero coefficients (L0
 regression), using [`Cyclops`](https://github.com/OHDSI/Cyclops) for the fitting. It maximizes the
-log-likelihood minus a small ridge term, with exactly `K` penalized covariates:
+log-likelihood minus a small ridge term, with at most (normally exactly) `K` penalized covariates:
 
   maximize  log L(beta) - sum(beta_j^2) / (2 * variance)   subject to at most K non-zero beta_j
 
@@ -27,12 +27,13 @@ Features
   pursuit (Zhou et al. 2021). The search moves by gradient hard-thresholding steps and by swapping
   weak covariates in the support for strong ones outside ("splicing", Zhu et al. 2020; swaps as in
   Beck and Eldar 2013 and L0Learn), and accepts a move only if it improves the objective, so it
-  always converges. The model is the one of Chu et al. (2020); only the optimizer is different.
+  never makes the fit worse and stops after finitely many moves. The model is the one of Chu et
+  al. (2020); only the optimizer is different.
 - **`algorithm = "chu2020"`** runs iterative hard thresholding as in Chu et al. (2020), and gives
   the same results as their MendelIHT.jl.
 - **Warm starts** from `startingCoefficients`, for example a solution at a smaller `K`, so that a
   search over `K` (as in PatientLevelPrediction's cross-validation) is fast.
-- Logistic, Poisson and Cox models (validated); other Cyclops model types run with a warning.
+- Logistic, Poisson and Cox models (validated); other Cyclops model types are untested.
 - **`algorithm = "legacy"`** reproduces version 1.0.3 (Broken Adaptive Ridge with a projection onto
   the `K` largest coefficients after each fit), so that earlier models can be refitted. Deprecated.
 

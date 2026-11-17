@@ -18,7 +18,8 @@ createIhtPrior(
 \item{K}{Number of non-zero penalized covariates. The intercept and \code{exclude}
 do not count.}
 
-\item{variance}{Ridge variance \eqn{\sigma^2} (\code{Inf} for plain L0).}
+\item{variance}{Ridge variance \eqn{\sigma^2} (\code{Inf} for plain L0). Version 1.0.3 had
+\code{penalty} in this place.}
 
 \item{exclude}{Covariate ids or names that are not penalized and do not count towards
 \code{K}.}
@@ -41,8 +42,8 @@ An IHT Cyclops prior object of class inheriting from \code{"cyclopsPrior"} for u
 }
 \description{
 \code{createIhtPrior} creates a prior for \code{\link[Cyclops]{fitCyclopsModel}} that keeps at
-most \code{K} non-zero penalized coefficients. It maximizes the log-likelihood minus a small
-ridge term,
+most \code{K} non-zero penalized coefficients (normally exactly \code{K}). It maximizes the
+log-likelihood minus a small ridge term,
 \deqn{\ell(\beta) - \sum_{j \in P} \beta_j^2 / (2 \sigma^2) \quad \textrm{subject to at most } K
   \textrm{ non-zero } \beta_j, j \in P,}
 where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and
@@ -60,9 +61,11 @@ MendelIHT.jl.
 
 \code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example
 an earlier solution at a smaller \code{K}): their non-zero penalized coefficients form the
-starting support. \code{K} and \code{variance} are chosen by the caller, for example by
-cross-validation in PatientLevelPrediction. \code{fitCyclopsModel(..., returnCvPredictions =
-TRUE)} returns out-of-fold predictions at the given \code{K} and \code{variance}.
+starting support. Without exact refits (\code{"chu2020"}) they are ignored, as the paper starts
+from the gradient. \code{K} and \code{variance} are chosen by the caller, for example by
+cross-validation in PatientLevelPrediction. \code{fitCyclopsModel(..., cvFolds,
+returnCvPredictions = TRUE)} returns out-of-fold predictions at the given \code{K} and
+\code{variance}.
 
 \code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a
 projection onto the \code{K} largest coefficients after each fit; deprecated) so that earlier

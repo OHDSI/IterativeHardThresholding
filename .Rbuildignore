@@ -9,4 +9,3 @@ docs
 cran-comments.md
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
-^\.git$

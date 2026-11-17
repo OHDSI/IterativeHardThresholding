@@ -20,8 +20,8 @@
 #'
 #' @description
 #' \code{createIhtPrior} creates a prior for \code{\link[Cyclops]{fitCyclopsModel}} that keeps at
-#' most \code{K} non-zero penalized coefficients. It maximizes the log-likelihood minus a small
-#' ridge term,
+#' most \code{K} non-zero penalized coefficients (normally exactly \code{K}). It maximizes the
+#' log-likelihood minus a small ridge term,
 #' \deqn{\ell(\beta) - \sum_{j \in P} \beta_j^2 / (2 \sigma^2) \quad \textrm{subject to at most } K
 #'   \textrm{ non-zero } \beta_j, j \in P,}
 #' where \eqn{P} are the penalized covariates (all but the intercept and \code{exclude}) and
@@ -39,9 +39,11 @@
 #'
 #' \code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example
 #' an earlier solution at a smaller \code{K}): their non-zero penalized coefficients form the
-#' starting support. \code{K} and \code{variance} are chosen by the caller, for example by
-#' cross-validation in PatientLevelPrediction. \code{fitCyclopsModel(..., returnCvPredictions =
-#' TRUE)} returns out-of-fold predictions at the given \code{K} and \code{variance}.
+#' starting support. Without exact refits (\code{"chu2020"}) they are ignored, as the paper starts
+#' from the gradient. \code{K} and \code{variance} are chosen by the caller, for example by
+#' cross-validation in PatientLevelPrediction. \code{fitCyclopsModel(..., cvFolds,
+#' returnCvPredictions = TRUE)} returns out-of-fold predictions at the given \code{K} and
+#' \code{variance}.
 #'
 #' \code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a
 #' projection onto the \code{K} largest coefficients after each fit; deprecated) so that earlier
@@ -49,7 +51,8 @@
 #'
 #' @param K              Number of non-zero penalized covariates. The intercept and \code{exclude}
 #'                       do not count.
-#' @param variance       Ridge variance \eqn{\sigma^2} (\code{Inf} for plain L0).
+#' @param variance       Ridge variance \eqn{\sigma^2} (\code{Inf} for plain L0). Version 1.0.3 had
+#'                       \code{penalty} in this place.
 #' @param exclude        Covariate ids or names that are not penalized and do not count towards
 #'                       \code{K}.
 #' @param forceIntercept Logical: penalize the intercept and let it count towards \code{K}.
@@ -110,15 +113,17 @@ createIhtPrior <- function(K,
   algorithm <- match.arg(algorithm, c("default", "chu2020", "legacy"))
   legacyArgs <- list(...)
   if (algorithm == "legacy") {
+    if (!missing(variance) || !missing(control)) {
+      stop("variance and control do not apply to algorithm = \"legacy\"; give its arguments by ",
+           "name (penalty, ...)")
+    }
     return(createLegacyPrior(K, exclude, forceIntercept, legacyArgs))
   }
-  barOnly <- c("penalty", "fitBestSubset", "initialRidgeVariance", "tolerance", "maxIterations",
-               "threshold", "delta")
   if (length(legacyArgs) > 0) {
     if (is.null(names(legacyArgs)) || any(names(legacyArgs) == "")) {
       stop("createIhtPrior: unnamed extra arguments")
     }
-    unknown <- setdiff(names(legacyArgs), barOnly)
+    unknown <- setdiff(names(legacyArgs), names(legacyDefaults))
     if (length(unknown) > 0) {
       stop("Unknown argument(s) to createIhtPrior: ", paste(unknown, collapse = ", "))
     }
@@ -127,10 +132,9 @@ createIhtPrior <- function(K,
          "coefficients), which version 2.0.0 replaced. Use algorithm = \"legacy\" to reproduce ",
          "earlier models, or see NEWS for the new arguments.")
   }
-  if (is.character(variance) && length(variance) == 1 && tolower(variance) %in% c("bic", "aic")) {
-    stop("variance = \"", variance, "\": the BIC/AIC penalty of version 1.0.3 is gone. Use ",
-         "algorithm = \"legacy\" with penalty = \"", variance, "\" to reproduce earlier models, ",
-         "or see NEWS.")
+  if (is.character(variance) && length(variance) == 1 && tolower(variance) == "bic") {
+    stop("variance = \"", variance, "\": the BIC penalty of version 1.0.3 is gone. Use ",
+         "algorithm = \"legacy\" with penalty = \"bic\" to reproduce earlier models, or see NEWS.")
   }
   K <- checkK(K)
   variance <- checkVariance(variance)
@@ -147,14 +151,7 @@ createIhtPrior <- function(K,
                  algorithm = algorithm,
                  control = control,
                  keepControl = TRUE,
-                 # reads everything from the prior object, so it survives a JSON round trip
-                 fitHook = function(cyclopsData, prior, control, weights, forceNewObject,
-                                    returnEstimates, startingCoefficients, fixedCoefficients,
-                                    ...) {
-                   hook <- utils::getFromNamespace("ihtFitHook", "IterativeHardThresholding")
-                   hook(cyclopsData, prior, control, weights, forceNewObject, returnEstimates,
-                        startingCoefficients, fixedCoefficients)
-                 }),
+                 fitHook = fitHook),
             class = c("cyclopsPrior", "ihtPrior"))
 }
 
@@ -176,11 +173,12 @@ createIhtPrior <- function(K,
 #'                         with the largest \eqn{|g_j|} in the model with only the unpenalized
 #'                         covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain IHT
 #'                         iterations until the support is stable for 10 iterations.
-#' @param strictAcceptance Accept a move only if it improves the objective by more than
-#'                         \code{tolerance}. \code{FALSE} accepts the last backtracking trial, as
-#'                         Chu et al. (2020) do.
+#' @param strictAcceptance With exact refits: accept a threshold step only if it improves the
+#'                         objective by more than \code{tolerance}. \code{FALSE} accepts the last
+#'                         backtracking trial, as Chu et al. (2020) do.
 #' @param maxHalve         Maximum step halvings per iteration (default 5; \code{"chu2020"}: 3).
-#' @param maxSwap          Largest swap size; default \code{ceiling(K / 4)}.
+#' @param maxSwap          With exact refits: largest swap size, a whole number >= 1; default (NA)
+#'                         a quarter of the support, \code{ceiling(K / 4)}.
 #' @param tolerance        With exact refits: smallest objective gain that counts as an improvement
 #'                         (default 1e-3). Without: the convergence tolerance on the scaled change
 #'                         in coefficients (1e-4).
@@ -226,18 +224,34 @@ resolveControl <- function(control, algorithm) {
   for (k in names(control)) {
     if (!is.null(control[[k]])) ctl[[k]] <- control[[k]]
   }
+  flag <- function(x) is.logical(x) && length(x) == 1 && !is.na(x)
+  count <- function(x, min) {
+    is.numeric(x) && length(x) == 1 && !is.na(x) && x >= min && x == round(x)
+  }
+  for (k in c("exactRefits", "thresholdSteps", "splicing", "strictAcceptance")) {
+    if (!flag(ctl[[k]])) stop(k, " must be TRUE or FALSE")
+  }
+  if (!((length(ctl$maxSwap) == 1 && is.na(ctl$maxSwap)) || count(ctl$maxSwap, 1))) {
+    stop("maxSwap must be NA or a whole number >= 1")
+  }
+  if (!count(ctl$maxHalve, 0)) stop("maxHalve must be a whole number >= 0")
+  if (!count(ctl$minIterations, 0)) stop("minIterations must be a whole number >= 0")
+  if (!count(ctl$maxIterations, 1)) stop("maxIterations must be a whole number >= 1")
+  if (!(is.numeric(ctl$tolerance) && length(ctl$tolerance) == 1 && ctl$tolerance > 0)) {
+    stop("tolerance must be a positive number")
+  }
+  if (!(is.numeric(ctl$threads) && length(ctl$threads) == 1)) stop("threads must be a number")
   if (ctl$exactRefits) {
     ctl$start <- match.arg(ctl$start, c("gradient", "warmup"))
-  } else if (isTRUE(ctl$splicing) && !identical(control$splicing, NULL)) {
-    stop("splicing needs exactRefits = TRUE")
   } else {
+    if (isTRUE(control$splicing)) stop("splicing needs exactRefits = TRUE")
     ctl$splicing <- FALSE
   }
   structure(ctl, class = "ihtControl")
 }
 
 checkK <- function(K) {
-  if (!is.numeric(K) || length(K) != 1 || is.na(K) || K < 1 || K != round(K)) {
+  if (!is.numeric(K) || length(K) != 1 || !is.finite(K) || K < 1 || K != round(K)) {
     stop("K must be one whole number >= 1")
   }
   as.integer(K)

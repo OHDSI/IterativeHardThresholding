@@ -14,6 +14,7 @@ test_that("Poisson with an offset", {
 })
 
 test_that("Cox", {
+  skip_if_not_installed("survival")
   set.seed(5)
   n <- 1000
   p <- 20

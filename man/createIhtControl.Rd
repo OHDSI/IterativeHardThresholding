@@ -34,13 +34,14 @@ with the largest \eqn{|g_j|} in the model with only the unpenalized
 covariates (as Chu et al. 2020 do); \code{"warmup"} runs plain IHT
 iterations until the support is stable for 10 iterations.}
 
-\item{strictAcceptance}{Accept a move only if it improves the objective by more than
-\code{tolerance}. \code{FALSE} accepts the last backtracking trial, as
-Chu et al. (2020) do.}
+\item{strictAcceptance}{With exact refits: accept a threshold step only if it improves the
+objective by more than \code{tolerance}. \code{FALSE} accepts the last
+backtracking trial, as Chu et al. (2020) do.}
 
 \item{maxHalve}{Maximum step halvings per iteration (default 5; \code{"chu2020"}: 3).}
 
-\item{maxSwap}{Largest swap size; default \code{ceiling(K / 4)}.}
+\item{maxSwap}{With exact refits: largest swap size, a whole number >= 1; default (NA)
+a quarter of the support, \code{ceiling(K / 4)}.}
 
 \item{tolerance}{With exact refits: smallest objective gain that counts as an improvement
 (default 1e-3). Without: the convergence tolerance on the scaled change

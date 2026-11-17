@@ -8,9 +8,10 @@ Breaking changes: `createIhtPrior()` now runs iterative hard thresholding as des
   after each fit. Coefficients that reached zero were fixed there, so covariates could not re-enter;
   with the default `penalty = "bic"` the models often had fewer than K covariates.
 - The new default maximizes the log-likelihood minus a small ridge term (`variance`, default 1;
-  `Inf` is plain L0) with exactly `K` non-zero penalized covariates. It fits each support exactly
-  (Newton), moves by gradient hard-thresholding steps and by swaps of weak and strong covariates,
-  and accepts a move only if it improves the objective. Needs Cyclops >= 4.0.1.
+  `Inf` is plain L0) with at most (normally exactly) `K` non-zero penalized covariates. It fits each
+  support exactly (Newton), moves by gradient hard-thresholding steps and by swaps of weak and
+  strong covariates, and accepts a move only if it improves the objective. Needs Cyclops >= 4.0.1.
+- The second argument of `createIhtPrior()` is now `variance`; in 1.0.3 it was `penalty`.
 - `algorithm = "chu2020"` runs the algorithm of Chu et al. (2020) as in MendelIHT.jl.
 - `algorithm = "legacy"` runs 1.0.3 unchanged, with its arguments (`penalty`, `fitBestSubset`,
   ...), so earlier models can be reproduced. Deprecated. Without it, those arguments stop with an
@@ -21,7 +22,8 @@ Breaking changes: `createIhtPrior()` now runs iterative hard thresholding as des
   and `variance` is left to the caller (PatientLevelPrediction tunes them by cross-validation).
 - `createIhtControl()` has a switch for each part of the algorithm.
 - `createFastIhtPrior()` is removed.
-- Fixed: `"aic"` and upper-case penalties were documented but stopped with an error.
+- The documentation no longer lists `"aic"` and upper-case penalties, which never worked.
+  `algorithm = "legacy"` now refuses them when the prior is created instead of at fit time.
 
 IterativeHardThresholding 1.0.3
 =============

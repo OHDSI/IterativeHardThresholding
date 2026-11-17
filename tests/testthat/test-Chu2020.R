@@ -5,11 +5,10 @@ test_that("chu2020 keeps K covariates and converges", {
   expect_true(fit$iht$converged)
 })
 
-test_that("chu2020 is deterministic", {
-  pr <- createIhtPrior(K = 8, variance = Inf, algorithm = "chu2020")
-  a <- fitIht(simulateBinary(p = 40, seed = 5)$data, pr)
-  b <- fitIht(simulateBinary(p = 40, seed = 5)$data, pr)
-  expect_equal(coef(a), coef(b))
+test_that("chu2020 with a ridge term keeps K covariates", {
+  s <- simulateBinary()
+  fit <- fitIht(s$data, createIhtPrior(K = 5, variance = 1, algorithm = "chu2020"))
+  expect_equal(penalizedNonZero(fit), 5)
 })
 
 test_that("chu2020 reproduces MendelIHT.jl", {
@@ -59,8 +58,9 @@ test_that("exact refits converge where the paper's algorithm needs more than 200
   beta[sample(p, 10)] <- sample(c(-1, 1), 10, TRUE) * stats::runif(10, 0.2, 0.8)
   y <- stats::rbinom(n, 1, stats::plogis(-1 + x %*% beta))
   d <- function() Cyclops::createCyclopsData(y ~ x, modelType = "lr")
-  chu <- suppressWarnings(
-    fitIht(d(), createIhtPrior(K = 60, variance = Inf, algorithm = "chu2020"))
+  expect_warning(
+    chu <- fitIht(d(), createIhtPrior(K = 60, variance = Inf, algorithm = "chu2020")),
+    "did not converge"
   )
   default <- fitIht(d(), createIhtPrior(K = 60, variance = Inf))
   expect_false(chu$iht$converged) # stops at MendelIHT's default cap of 200 iterations

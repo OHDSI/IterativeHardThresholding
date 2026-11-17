@@ -24,18 +24,18 @@ test_that("finds the best subset on a small problem (exhaustive search)", {
   expect_equal(fit$log_likelihood, max(ll), tolerance = 1e-6)
 })
 
-test_that("every switch combination runs and keeps K", {
+test_that("each switch runs, keeps K and does what it says", {
   s <- simulateBinary(p = 30)
-  switches <- list(createIhtControl(thresholdSteps = FALSE),
-                   createIhtControl(splicing = FALSE),
-                   createIhtControl(threads = 2),
-                   createIhtControl(start = "warmup"),
-                   createIhtControl(strictAcceptance = FALSE),
-                   createIhtControl(exactRefits = FALSE))
-  for (sw in switches) {
-    fit <- fitIht(s$data, createIhtPrior(K = 4, control = sw))
-    expect_equal(penalizedNonZero(fit), 4)
-  }
+  fit <- function(...) fitIht(s$data, createIhtPrior(K = 4, control = createIhtControl(...)))
+  default <- fit()
+  noSteps <- fit(thresholdSteps = FALSE)
+  noSplicing <- fit(splicing = FALSE)
+  fits <- list(default, noSteps, noSplicing, fit(threads = 2), fit(start = "warmup"),
+               fit(strictAcceptance = FALSE), fit(exactRefits = FALSE), fit(maxSwap = 1))
+  for (f in fits) expect_equal(penalizedNonZero(f), 4)
+  expect_equal(noSteps$iht$steps, 0)
+  expect_equal(noSplicing$iht$splices, 0)
+  expect_equal(coef(fits[[4]]), coef(default)) # threads do not change the result
 })
 
 test_that("excluded covariates are kept and not counted", {
@@ -43,6 +43,27 @@ test_that("excluded covariates are kept and not counted", {
   fit <- fitIht(s$data, createIhtPrior(K = 3, exclude = c("x40")))
   expect_true(coef(fit)["x40"] != 0)
   expect_equal(sum(coef(fit)[!(names(coef(fit)) %in% c("(Intercept)", "x40"))] != 0), 3)
+  # by covariate id: the same fit
+  ids <- Cyclops::getCovariateIds(s$data)
+  byId <- fitIht(simulateBinary()$data, createIhtPrior(K = 3, exclude = ids[41]))
+  expect_equal(coef(byId), coef(fit))
+})
+
+test_that("forceIntercept makes the intercept count towards K", {
+  s <- simulateBinary()
+  fit <- fitIht(s$data, createIhtPrior(K = 3, forceIntercept = TRUE))
+  expect_lte(sum(coef(fit) != 0), 3)
+  # forced in and excluded again: not penalized, as without forceIntercept
+  both <- fitIht(simulateBinary()$data, createIhtPrior(K = 3, forceIntercept = TRUE,
+                                                       exclude = "(Intercept)"))
+  plain <- fitIht(simulateBinary()$data, createIhtPrior(K = 3))
+  expect_equal(coef(both), coef(plain), tolerance = 1e-6)
+})
+
+test_that("K equal to the number of penalized covariates", {
+  s <- simulateBinary(p = 6)
+  fit <- fitIht(s$data, createIhtPrior(K = 6))
+  expect_equal(penalizedNonZero(fit), 6)
 })
 
 test_that("weight 0 equals dropping the rows", {
@@ -97,7 +118,7 @@ test_that("startingCoefficients warm-start the fit", {
   # starting from the solution itself: same answer, and the search stops at once
   again <- fitIht(data(), createIhtPrior(K = 8), startingCoefficients = coef(cold))
   expect_equal(coef(again), coef(cold), tolerance = 1e-6)
-  expect_lte(again$iht$refits, cold$iht$refits)
+  expect_equal(again$iht$steps + again$iht$splices, 0)
   # from a smaller K: a valid K-sized model
   small <- fitIht(data(), createIhtPrior(K = 4))
   grown <- fitIht(data(), createIhtPrior(K = 8), startingCoefficients = coef(small))
