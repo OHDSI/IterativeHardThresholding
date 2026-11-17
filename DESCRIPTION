@@ -23,6 +23,8 @@ Imports:
     ParallelLogger,
     stats,
     utils
+Remotes:
+    ohdsi/Cyclops@develop
 Suggests:
     survival,
     testthat,
