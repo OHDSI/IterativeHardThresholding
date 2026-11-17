@@ -53,6 +53,9 @@ where \eqn{P} are the penalized covariates (all but the intercept and \code{excl
 The default algorithm fits the support exactly (Newton, Cyclops >= 4.0), moves by gradient hard-thresholding steps
 and by swaps of weak and strong covariates ("splicing"), and accepts a move only when it improves the objective.
 \code{algorithm = "chu2020"} runs iterative hard thresholding as in Chu et al. (2020) and their MendelIHT.jl.
+\code{startingCoefficients} given to \code{fitCyclopsModel} are used as a warm start (for example an earlier
+solution at a smaller \code{K}): their non-zero penalized coefficients form the starting support.
+
 \code{algorithm = "legacy"} runs version 1.0.3 of this package (Broken Adaptive Ridge with a cap of \code{K};
 deprecated) so that earlier models can be reproduced.
 }

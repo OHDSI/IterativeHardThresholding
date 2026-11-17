@@ -69,3 +69,21 @@ test_that("plain L0 rejects a support that separates the data", {
   expect_equal(as.numeric(coef(fit)[8]), 0) # intercept + 6 covariates, then the separating column
   expect_true(all(abs(coef(fit)) < 20))
 })
+
+test_that("startingCoefficients warm-start the fit", {
+  s <- simulateBinary(p = 40, seed = 5)
+  cold <- Cyclops::fitCyclopsModel(s$data, prior = createIhtPrior(K = 8), control = silent())
+  # starting from the solution itself: same answer, and the search stops at once
+  again <- Cyclops::fitCyclopsModel(simulateBinary(p = 40, seed = 5)$data, prior = createIhtPrior(K = 8),
+                                    control = silent(), startingCoefficients = coef(cold))
+  expect_equal(coef(again), coef(cold), tolerance = 1e-6)
+  expect_lte(again$iht$refits, cold$iht$refits)
+  # from a smaller K: a valid K-sized model whose objective is at least that of the warm-start refit
+  small <- Cyclops::fitCyclopsModel(simulateBinary(p = 40, seed = 5)$data, prior = createIhtPrior(K = 4), control = silent())
+  grown <- Cyclops::fitCyclopsModel(simulateBinary(p = 40, seed = 5)$data, prior = createIhtPrior(K = 8),
+                                    control = silent(), startingCoefficients = coef(small))
+  expect_equal(penalizedNonZero(grown), 8)
+  expect_true(grown$iht$converged)
+  expect_error(Cyclops::fitCyclopsModel(simulateBinary(p = 40, seed = 5)$data, prior = createIhtPrior(K = 8),
+                                        control = silent(), startingCoefficients = c(1, 2)), "one finite value")
+})

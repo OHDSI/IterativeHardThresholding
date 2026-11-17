@@ -54,7 +54,7 @@ ihtFitHook <- function(cyclopsData, prior, control, weights, forceNewObject, ret
   }
 
   pb <- newProblem(cyclopsData, unpenalized, variance, control, weights, prior$forceIntercept)
-  res <- runEngine(pb, K, ctl)
+  res <- runEngine(pb, K, ctl, warm = warmStart(pb, startingCoefficients, ctl))
   fit <- finalFit(pb, res$b)
   class(fit) <- c(class(fit), "cyclopsIhtFit")
   fit$iht <- list(algorithm = prior$algorithm, K = K, variance = variance, objective = res$F,
@@ -71,6 +71,19 @@ ihtFitHook <- function(cyclopsData, prior, control, weights, forceNewObject, ret
     warning("IHT did not converge in ", ctl$maxIterations, " iterations")
   }
   fit
+}
+
+# startingCoefficients (one per covariate, as fitCyclopsModel takes them) as a warm start for the fit on all rows,
+# e.g. an earlier solution at a smaller K or another variance. Its non-zero penalized coefficients are the starting
+# support (the K largest if there are more; the strongest outside covariates are added if fewer). Only the exact
+# engine uses it; "chu2020" starts as the paper does.
+warmStart <- function(pb, startingCoefficients, ctl) {
+  if (is.null(startingCoefficients) || !ctl$exactRefits) return(NULL)
+  b <- as.numeric(startingCoefficients)
+  if (length(b) != pb$p || anyNA(b)) {
+    stop("startingCoefficients must have one finite value per covariate (", pb$p, ")")
+  }
+  list(b = b, T = pb$pen[b[pb$pen] != 0])
 }
 
 runEngine <- function(pb, K, ctl, warm = NULL) {
