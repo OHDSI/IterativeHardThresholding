@@ -11,98 +11,107 @@ IterativeHardThresholding
 Introduction
 ============
 
-`IterativeHardThresholding` is an `R` package for performing L_0-based regressions using `Cyclops`
+`IterativeHardThresholding` fits regression models with at most `K` non-zero coefficients (L0
+regression), using [`Cyclops`](https://github.com/OHDSI/Cyclops) for the fitting. It maximizes the
+log-likelihood minus a small ridge term, with at most (normally exactly) `K` penalized covariates:
+
+  maximize  log L(beta) - sum(beta_j^2) / (2 * variance)   subject to at most K non-zero beta_j
+
+The intercept and any `exclude`d covariates are not penalized and do not count towards `K`.
 
 Features
 ========
 
+- **Exact fits on the support.** Each candidate support is fitted exactly (Newton, Cyclops >=
+  4.0.1), as in gradient hard thresholding pursuit (Yuan et al. 2018) and Newton hard-thresholding
+  pursuit (Zhou et al. 2021). The search moves by gradient hard-thresholding steps and by swapping
+  weak covariates in the support for strong ones outside ("splicing", Zhu et al. 2020; swaps as in
+  Beck and Eldar 2013 and L0Learn), and accepts a move only if it improves the objective, so it
+  never makes the fit worse and stops after finitely many moves. The model is the one of Chu et
+  al. (2020); only the optimizer is different.
+- **`algorithm = "chu2020"`** runs iterative hard thresholding as in Chu et al. (2020), and gives
+  the same results as their MendelIHT.jl.
+- **Warm starts** from `startingCoefficients`, for example a solution at a smaller `K`, so that a
+  search over `K` (as in PatientLevelPrediction's cross-validation) is fast.
+- Logistic, Poisson and Cox models (validated); other Cyclops model types are untested.
+- **`algorithm = "legacy"`** reproduces version 1.0.3 (Broken Adaptive Ridge with a projection onto
+  the `K` largest coefficients after each fit), so that earlier models can be refitted. Deprecated.
+
+When to use it
+==============
+
+On real observational health data (8 prediction tasks), L0 models with `K = 25` predicted better
+than a lasso with the same number of covariates (held-out AUC +0.007 on average, 7 of 8 tasks) and
+were better calibrated. With `K = 100` the lasso was better. IHT suits small models. `K`, and if
+needed `variance`, are best chosen by cross-validation, as PatientLevelPrediction does.
+
 Examples
 ========
- * Cox's Proportional Hazards Model
- ```r
-library(Cyclops)
-library(IterativeHardThresholding)
-library(survival)
 
-## data dimension
-p <- 20    # number of covariates
-n <- 300   # sample size
-
-## Cox model parameters
-true.beta <- c(1, 0.1, 0, -1, 1, rep(0, p - 5))
-
-## simulate data from an exponential model
-x        <- matrix(rnorm(p * n, mean = 0, sd = 1), ncol = p)
-ti       <- rweibull(n, shape = 1, scale = exp(-x%*%true.beta))
-ui       <- runif(n, 0, 10) # Controls censoring
-ci       <- rweibull(n, shape = 1, scale = ui * exp(-x%*%true.beta))
-survtime <- pmin(ti, ci)
-delta    <- ti == survtime; mean(delta)
-
-cyclopsData <- createCyclopsData(Surv(survtime, delta) ~ x, modelType = "cox")
-ihtPrior    <- createIhtPrior(K = 3, penalty = "bic")
-
-cyclopsFit <- fitCyclopsModel(cyclopsData,
-                              prior = ihtPrior)
-coef(cyclopsFit)
- ```
-
-* Generalized Linear Model
- ```r
+```r
 library(Cyclops)
 library(IterativeHardThresholding)
 
-## data dimension
-p <- 20    # number of covariates
-n <- 300   # sample size
-
-## logistic model parameters
-itcpt     <- 0.2 # intercept
-true.beta <- c(1, 0.3, 0, -1, 1, rep(0, p - 5))
-
-## simulate data from logistic model
-x <- matrix(rnorm(p * n, mean = 0, sd = 1), ncol = p)
-y <- rbinom(n, 1, 1 / (1 + exp(-itcpt - x%*%true.beta)))
-
-
-# fit BAR model
+set.seed(1)
+n <- 2000; p <- 50
+x <- matrix(rbinom(n * p, 1, 0.3), n)
+y <- rbinom(n, 1, plogis(-1 + x %*% c(1, -0.8, 0.6, rep(0, p - 3))))
 cyclopsData <- createCyclopsData(y ~ x, modelType = "lr")
-ihtPrior    <- createIhtPrior(K  = 3, penalty = "bic", exclude = c("(Intercept)"))
 
-cyclopsFit <- fitCyclopsModel(cyclopsData,
-                              prior = ihtPrior)
-coef(cyclopsFit)
- ```
-Technology
-============
+# a model with 5 covariates
+fit <- fitCyclopsModel(cyclopsData, prior = createIhtPrior(K = 5))
+coef(fit)[coef(fit) != 0]
+
+# warm-start K = 10 from the solution at K = 5
+fit10 <- fitCyclopsModel(cyclopsData, prior = createIhtPrior(K = 10),
+                         startingCoefficients = coef(fit))
+
+# the algorithm of Chu et al. (2020)
+fit <- fitCyclopsModel(cyclopsData,
+                       prior = createIhtPrior(K = 5, variance = Inf, algorithm = "chu2020"))
+```
 
 System Requirements
 ===================
-Requires `R` (version 3.2.0 or higher).
-
-Dependencies
-============
- * `Cyclops`
+Requires `R` (version 3.5.0 or higher) and `Cyclops` (version 4.0.1 or higher).
 
 Getting Started
 ===============
 1. On Windows, make sure [RTools](https://CRAN.R-project.org/bin/windows/Rtools/) is installed.
-2. In R, use the following commands to download and install `IterativeHardThresholding`:
+2. In R:
 
   ```r
-  install.packages("Cyclops")
-  install.packages("IterativeHardThresholding")
+  install.packages("remotes")
+  remotes::install_github("OHDSI/IterativeHardThresholding")
   ```
 
-3. To perform a L_0-based Cyclops model fit with IHT, use the following commands in R:
+References
+==========
+Chu BB, Keys KL, German CA, Zhou H, Zhou JJ, Sobel EM, Sinsheimer JS, Lange K (2020). Iterative hard
+thresholding in genome-wide association studies: Generalized linear models, prior weights, and
+double sparsity. GigaScience 9(6), giaa044. <https://doi.org/10.1093/gigascience/giaa044>
 
-  ```r
-  library(IterativeHardThresholding)
-  cyclopsData <- createCyclopsData(formula, modelType = "modelType") ## TODO: Update
-  ihtPrior    <- createIhtPrior(K = 5, penalty = "bic")
-  cyclopsFit  <- fitCyclopsModel(cyclopsData, prior = ihtPrior)
-  coef(cyclopsFit) #Extract coefficients
-  ```
+The default algorithm builds on:
+
+- Bahmani S, Raj B, Boufounos PT (2013). Greedy sparsity-constrained optimization. Journal of
+  Machine Learning Research 14(25), 807-841. (GraSP: exact fits on the support, for logistic
+  regression.)
+- Beck A, Eldar YC (2013). Sparsity constrained nonlinear optimization: optimality conditions and
+  algorithms. SIAM Journal on Optimization 23(3), 1480-1509. <https://doi.org/10.1137/120869778>
+  (Optimality conditions based on swaps.)
+- Yuan XT, Li P, Zhang T (2018). Gradient hard thresholding pursuit. Journal of Machine Learning
+  Research 18(166), 1-43. (A gradient hard-thresholding step, then an exact fit on the new support.)
+- Zhou S, Xiu N, Qi HD (2021). Global and quadratic convergence of Newton hard-thresholding pursuit.
+  Journal of Machine Learning Research 22(12), 1-45. (Newton steps on the support.)
+- Zhu J, Wen C, Zhu J, Zhang H, Wang X (2020). A polynomial algorithm for best-subset selection
+  problem. Proceedings of the National Academy of Sciences 117(52), 33117-33123.
+  <https://doi.org/10.1073/pnas.2014241117> (abess: splicing.)
+- Hazimeh H, Mazumder R (2020). Fast best subset selection: coordinate descent and local
+  combinatorial optimization algorithms. Operations Research 68(5), 1517-1537.
+  <https://doi.org/10.1287/opre.2019.1919> (L0Learn: L0 with a ridge term, and swaps.)
+- Dedieu A, Hazimeh H, Mazumder R (2021). Learning sparse classifiers: continuous and mixed integer
+  optimization perspectives. Journal of Machine Learning Research 22(135), 1-47. (The same for
+  logistic regression.)
 
 Getting Involved
 ================
